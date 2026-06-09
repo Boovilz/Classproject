@@ -34,6 +34,7 @@ function Attendance({ openStudent }) {
   const [rows, setRows] = React.useState(() => getAttendance(selDate));
   const [picker, setPicker] = React.useState(null);
   const [dirty, setDirty] = React.useState(false);
+  const [showBarcode, setShowBarcode] = React.useState(false);
 
   // reload rows when date changes
   React.useEffect(() => {
@@ -212,7 +213,7 @@ function Attendance({ openStudent }) {
         </div>
 
         {/* bulk actions */}
-        <div className="row" style={{ gap: 8 }}>
+        <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
           <span style={{ fontSize: 12.5, color: 'var(--muted)', alignSelf: 'center' }}>เช็กรวดเร็ว:</span>
           <button onClick={() => bulkAll('present')} className="btn"
             style={{ padding: '8px 13px', fontSize: 13, background: 'color-mix(in oklch,var(--st-present) 16%,transparent)', color: 'var(--st-present)' }}>
@@ -224,6 +225,13 @@ function Attendance({ openStudent }) {
               color: dirty ? '#fff' : 'var(--muted)' }}>
             <Icon name="download" size={16} color={dirty ? '#fff' : 'var(--muted)'} />
             {dirty ? 'บันทึก *' : 'บันทึกแล้ว'}
+          </button>
+          <button onClick={() => setShowBarcode(b => !b)} className="btn"
+            style={{ padding: '8px 14px', fontSize: 13,
+              background: showBarcode ? 'linear-gradient(120deg,oklch(0.52 0.19 265),oklch(0.48 0.2 280))' : 'var(--surface-2)',
+              color: showBarcode ? '#fff' : 'var(--ink-soft)' }}>
+            <Icon name="report" size={16} color={showBarcode ? '#fff' : 'var(--ink-soft)'} />
+            {showBarcode ? 'ซ่อนบาร์โค้ด' : 'บันทึกคะแนน 🔲'}
           </button>
         </div>
       </div>
@@ -237,6 +245,20 @@ function Attendance({ openStudent }) {
           ? <span className="pill" style={{ background:'color-mix(in oklch,var(--st-present) 16%,transparent)', color:'var(--st-present)', fontSize:11 }}>วันเรียน</span>
           : <span className="pill" style={{ background:'var(--surface-2)', color:'var(--muted)', fontSize:11 }}>หยุด</span>}
       </div>
+
+      {/* barcode panel — inline toggle */}
+      {showBarcode && (
+        <div className="glass col" style={{ borderRadius: 'var(--r-lg)', padding: 18, gap: 10,
+          borderLeft: '3px solid oklch(0.52 0.19 265)', animation: 'rise .2s ease-out' }}>
+          <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--ink)' }}>
+              <Icon name="report" size={16} /> บันทึกคะแนนด้วยบาร์โค้ด
+            </div>
+            <span style={{ fontSize: 12, color: 'var(--muted)' }}>สแกนหรือพิมพ์รหัส → กด Enter → มอบคะแนน</span>
+          </div>
+          <BarcodePanel compact={true} autoFocus={false} />
+        </div>
+      )}
 
       {/* summary chips */}
       <div className="row" style={{ gap: 10, flexWrap: 'wrap' }}>
