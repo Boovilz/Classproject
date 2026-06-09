@@ -1,0 +1,256 @@
+/* ============================================================
+   GAMIFIED CLASSROOM OS — Design System
+   Two worlds: Teacher (light/navy) + Game (dark/neon)
+   ============================================================ */
+
+:root {
+  --font-display: 'Baloo Thai 2', system-ui, sans-serif;
+  --font-body: 'Noto Sans Thai', system-ui, sans-serif;
+  --font-tech: 'Chakra Petch', system-ui, sans-serif;
+
+  /* glass intensity ~60 */
+  --glass-blur: 16px;
+  --r-sm: 10px;
+  --r-md: 16px;
+  --r-lg: 24px;
+  --r-xl: 32px;
+
+  /* status palette (shared) */
+  --st-present: oklch(0.66 0.16 150);
+  --st-absent:  oklch(0.62 0.20 25);
+  --st-sick:    oklch(0.74 0.15 70);
+  --st-leave:   oklch(0.66 0.14 250);
+  --st-late:    oklch(0.72 0.16 45);
+  --st-activity:oklch(0.62 0.18 305);
+
+  /* rank palette */
+  --rk-bronze:   oklch(0.62 0.10 55);
+  --rk-silver:   oklch(0.78 0.02 250);
+  --rk-gold:     oklch(0.80 0.14 85);
+  --rk-platinum: oklch(0.82 0.10 200);
+  --rk-diamond:  oklch(0.80 0.14 230);
+  --rk-master:   oklch(0.66 0.22 315);
+}
+
+/* ---------- TEACHER WORLD (light) ---------- */
+[data-world="teacher"] {
+  --bg:        oklch(0.975 0.006 250);
+  --bg-2:      oklch(0.955 0.010 250);
+  --surface:   rgba(255,255,255,0.72);
+  --surface-2: rgba(255,255,255,0.55);
+  --surface-solid: oklch(1 0 0);
+  --ink:       oklch(0.27 0.035 258);
+  --ink-soft:  oklch(0.46 0.03 258);
+  --muted:     oklch(0.58 0.022 258);
+  --line:      oklch(0.90 0.012 258);
+  --line-soft: oklch(0.93 0.008 258);
+  --navy:      oklch(0.45 0.12 258);
+  --navy-2:    oklch(0.36 0.13 262);
+  --navy-ink:  oklch(0.30 0.10 260);
+  --accent:    oklch(0.66 0.14 230);
+  --glass-border: rgba(255,255,255,0.85);
+  --glass-shadow: 0 18px 48px -22px rgba(30,42,90,0.42);
+  --halo: rgba(80,110,220,0.10);
+  color-scheme: light;
+}
+
+/* ---------- GAME WORLD (dark neon) ---------- */
+[data-world="game"] {
+  --bg:        oklch(0.17 0.045 285);
+  --bg-2:      oklch(0.13 0.05 282);
+  --surface:   rgba(132,108,210,0.10);
+  --surface-2: rgba(120,100,200,0.06);
+  --surface-solid: oklch(0.22 0.05 285);
+  --ink:       oklch(0.96 0.02 285);
+  --ink-soft:  oklch(0.80 0.04 285);
+  --muted:     oklch(0.66 0.05 285);
+  --line:      rgba(150,130,240,0.18);
+  --line-soft: rgba(150,130,240,0.10);
+  --navy:      oklch(0.70 0.16 270);
+  --cyan:      oklch(0.84 0.14 200);
+  --neon:      oklch(0.70 0.19 280);
+  --purple:    oklch(0.68 0.22 305);
+  --gold:      oklch(0.83 0.14 88);
+  --glass-border: rgba(170,150,255,0.22);
+  --glass-shadow: 0 24px 60px -24px rgba(0,0,0,0.7);
+  --halo: rgba(150,90,255,0.22);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--app-bg, #0b0b12);
+  color: #fff;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow: hidden;
+}
+
+#root { height: 100vh; width: 100vw; }
+
+/* world surface root */
+.world {
+  position: absolute;
+  inset: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  overflow: hidden;
+}
+.world::before {
+  /* ambient field */
+  content: "";
+  position: absolute; inset: -10%;
+  pointer-events: none;
+  z-index: 0;
+}
+[data-world="teacher"].world::before {
+  background:
+    radial-gradient(60% 50% at 12% 8%, rgba(90,120,230,0.10), transparent 60%),
+    radial-gradient(50% 50% at 92% 0%, rgba(110,170,240,0.10), transparent 55%);
+}
+[data-world="game"].world::before {
+  background:
+    radial-gradient(45% 40% at 8% 4%, rgba(140,80,255,0.30), transparent 60%),
+    radial-gradient(40% 40% at 96% 8%, rgba(40,200,255,0.18), transparent 60%),
+    radial-gradient(60% 50% at 50% 110%, rgba(120,60,255,0.22), transparent 60%);
+}
+
+/* ---------- glass ---------- */
+.glass {
+  background: var(--surface);
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.2);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.2);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+.glass-2 {
+  background: var(--surface-2);
+  backdrop-filter: blur(calc(var(--glass-blur) * 0.7)) saturate(1.1);
+  -webkit-backdrop-filter: blur(calc(var(--glass-blur) * 0.7)) saturate(1.1);
+  border: 1px solid var(--line);
+}
+
+/* fonts / headings */
+.display { font-family: var(--font-display); font-weight: 700; letter-spacing: -0.01em; }
+.tech { font-family: var(--font-tech); }
+h1,h2,h3,h4 { font-family: var(--font-display); font-weight: 700; line-height: 1.08; }
+
+/* scrollbars */
+.scroll { overflow-y: auto; scrollbar-width: thin; }
+.scroll::-webkit-scrollbar { width: 9px; height: 9px; }
+.scroll::-webkit-scrollbar-thumb { background: var(--line); border-radius: 99px; }
+.scroll::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+.scroll-thin { overflow-y: auto; scrollbar-width: none; }
+.scroll-thin::-webkit-scrollbar { width: 0; height: 0; }
+
+/* responsive: kingdom hub collapses its side rail on narrow viewports */
+.kingdom-grid { display: grid; grid-template-columns: minmax(0,1fr) 340px; gap: 16px; align-items: stretch; }
+@media (max-width: 1080px) { .kingdom-grid { grid-template-columns: minmax(0,1fr); } }
+
+/* buttons */
+.btn {
+  font-family: var(--font-display); font-weight: 600;
+  border: none; cursor: pointer; border-radius: var(--r-md);
+  padding: 12px 20px; font-size: 15px; transition: transform .14s ease, box-shadow .2s ease, background .2s;
+  display: inline-flex; align-items: center; gap: 9px; white-space: nowrap;
+}
+.btn:active { transform: translateY(1px) scale(0.99); }
+.btn-primary {
+  background: linear-gradient(180deg, var(--navy), var(--navy-2));
+  color: white; box-shadow: 0 10px 24px -10px var(--navy);
+}
+.btn-primary:hover { box-shadow: 0 14px 30px -10px var(--navy); transform: translateY(-1px); }
+.btn-ghost { background: var(--surface-2); color: var(--ink); border: 1px solid var(--line); }
+.btn-ghost:hover { background: var(--surface); }
+
+[data-world="game"] .btn-primary {
+  background: linear-gradient(120deg, var(--neon), var(--purple));
+  box-shadow: 0 0 0 1px rgba(180,150,255,0.3), 0 14px 36px -10px var(--halo);
+}
+.btn-neon {
+  background: linear-gradient(120deg, var(--cyan), var(--neon));
+  color: #0a0a14; font-weight: 700;
+  box-shadow: 0 14px 40px -12px var(--halo);
+}
+.btn-neon:hover { transform: translateY(-1px); box-shadow: 0 18px 50px -12px var(--halo); }
+
+/* pills */
+.pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 11px; border-radius: 99px; font-size: 12.5px; font-weight: 600;
+  font-family: var(--font-display);
+}
+
+/* tiny dot */
+.dot { width: 8px; height: 8px; border-radius: 99px; flex: none; }
+
+/* progress bar */
+.bar { height: 9px; border-radius: 99px; background: var(--line); overflow: hidden; }
+.bar > i { display: block; height: 100%; border-radius: 99px; }
+
+/* focus ring for inputs */
+.field {
+  width: 100%; font-family: var(--font-body); font-size: 15px;
+  padding: 13px 15px; border-radius: var(--r-md);
+  border: 1.5px solid var(--line); background: var(--surface-solid); color: var(--ink);
+  transition: border-color .15s, box-shadow .15s;
+}
+.field:focus { outline: none; border-color: var(--navy); box-shadow: 0 0 0 4px var(--halo); }
+[data-world="game"] .field { background: rgba(255,255,255,0.04); }
+
+/* animations */
+@keyframes floaty { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
+@keyframes pulseGlow { 0%,100% { opacity: .55; } 50% { opacity: 1; } }
+@keyframes spinSlow { to { transform: rotate(360deg); } }
+@keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes popIn { from { opacity: 0; transform: scale(.94); } to { opacity: 1; transform: none; } }
+@keyframes shimmer { to { background-position: 200% 0; } }
+@keyframes sweep { 0% { transform: translateX(-120%) skewX(-18deg); } 100% { transform: translateX(220%) skewX(-18deg); } }
+@keyframes scan { 0%,100% { transform: translateY(0); } 50% { transform: translateY(6px); } }
+@keyframes dmgFloat { 0% { opacity: 0; transform: translate(-50%, 0) scale(.6); } 20% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -70px) scale(1.15); } }
+@keyframes shake { 0%,100% { transform: translate(0,0); } 20% { transform: translate(-7px, 3px) rotate(-1deg); } 40% { transform: translate(6px, -3px) rotate(1deg); } 60% { transform: translate(-5px, 2px); } 80% { transform: translate(4px, -2px); } }
+@keyframes flashHit { 0%,100% { filter: brightness(1); } 50% { filter: brightness(1.9) saturate(1.4); } }
+@keyframes confettiFall { to { transform: translateY(420px) rotate(540deg); opacity: 0; } }
+@keyframes drawPath { to { stroke-dashoffset: 0; } }
+
+.rise { animation: rise .5s cubic-bezier(.2,.8,.2,1) both; }
+.pop { animation: popIn .4s cubic-bezier(.2,.9,.2,1) both; }
+.float { animation: floaty 5s ease-in-out infinite; }
+
+/* stagger helper */
+.stagger > * { animation: rise .5s cubic-bezier(.2,.8,.2,1) both; }
+.stagger > *:nth-child(1){animation-delay:.02s} .stagger > *:nth-child(2){animation-delay:.06s}
+.stagger > *:nth-child(3){animation-delay:.10s} .stagger > *:nth-child(4){animation-delay:.14s}
+.stagger > *:nth-child(5){animation-delay:.18s} .stagger > *:nth-child(6){animation-delay:.22s}
+.stagger > *:nth-child(7){animation-delay:.26s} .stagger > *:nth-child(8){animation-delay:.30s}
+.stagger > *:nth-child(9){animation-delay:.34s} .stagger > *:nth-child(10){animation-delay:.38s}
+.stagger > *:nth-child(11){animation-delay:.42s} .stagger > *:nth-child(12){animation-delay:.46s}
+
+/* neon text */
+.neon-text { color: var(--cyan); text-shadow: 0 0 18px var(--halo); }
+.gold-text { color: var(--gold); }
+
+/* grid noise / scanline for game cards */
+.scanlines::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; border-radius: inherit;
+  background: repeating-linear-gradient(0deg, rgba(255,255,255,0.03) 0 1px, transparent 1px 3px);
+  mix-blend-mode: overlay; opacity: .5;
+}
+
+/* image / avatar placeholder */
+.ph {
+  background-image: repeating-linear-gradient(135deg, var(--ph-a,rgba(255,255,255,.06)) 0 10px, var(--ph-b,rgba(255,255,255,.02)) 10px 20px);
+  position: relative; overflow: hidden;
+}
+
+.clip { overflow: hidden; }
+.nowrap { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row { display: flex; align-items: center; }
+.col { display: flex; flex-direction: column; }
+.center { display: flex; align-items: center; justify-content: center; }
+
+/* fade screen transition handled inline */

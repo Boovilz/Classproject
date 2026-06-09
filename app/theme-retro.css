@@ -1,0 +1,153 @@
+/* ============================================================
+   RETRO 8-BIT THEME  (original arcade-platformer styling)
+   Activated by html[data-theme="retro"] — reskins all screens
+   by overriding design tokens + panel/button structure.
+   Teacher = bright "overworld"; Game = dark "underground/castle".
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+/* ---------- token overrides per world ---------- */
+html[data-theme="retro"] [data-world="teacher"] {
+  --bg: #76b8ff; --bg-2: #62a9f6;
+  --surface: #fff6e2; --surface-2: #ffeccb; --surface-solid: #fff6e2;
+  --ink: #241a10; --ink-soft: #5c4126; --muted: #8a6c46;
+  --line: #e3c48d; --line-soft: #f0dcb4;
+  --navy: #2f6fd6; --navy-2: #1f4fa6; --navy-ink: #1f4fa6; --accent: #e23b3b;
+  --glass-border: #241a10; --glass-shadow: 5px 5px 0 rgba(20,14,6,0.22);
+  --halo: rgba(255,196,60,0.40);
+}
+html[data-theme="retro"] [data-world="game"] {
+  --bg: #150c2a; --bg-2: #0e0820;
+  --surface: #2a1d4c; --surface-2: #221741; --surface-solid: #2a1d4c;
+  --ink: #fff7ea; --ink-soft: #d9ccf4; --muted: #9a89c6;
+  --line: #4a3578; --line-soft: #3a2a60;
+  --navy: #36c24f; --cyan: #46c8ff; --neon: #ff5d4d; --purple: #b06bff; --gold: #ffc21f;
+  --glass-border: #0a0518; --glass-shadow: 5px 5px 0 rgba(4,2,12,0.55);
+  --halo: rgba(255,194,31,0.40);
+}
+
+html[data-theme="retro"] { --r-sm: 6px; --r-md: 8px; --r-lg: 10px; --r-xl: 12px; }
+html[data-theme="retro"] body { --app-bg: #0e0820; }
+
+/* ---------- pixel HUD font for numbers/short labels ---------- */
+html[data-theme="retro"] .tech {
+  font-family: 'Press Start 2P', 'Chakra Petch', monospace;
+  letter-spacing: 0;
+}
+html[data-theme="retro"] .display,
+html[data-theme="retro"] h1, html[data-theme="retro"] h2,
+html[data-theme="retro"] h3, html[data-theme="retro"] h4 {
+  letter-spacing: 0;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.18);
+}
+html[data-theme="retro"] [data-world="game"] h1,
+html[data-theme="retro"] [data-world="game"] h2,
+html[data-theme="retro"] [data-world="game"] h3,
+html[data-theme="retro"] [data-world="game"] h4 { text-shadow: 2px 2px 0 rgba(0,0,0,0.5); }
+
+/* ---------- panels: solid blocks, no blur, hard shadow ---------- */
+html[data-theme="retro"] .glass {
+  background: var(--surface) !important;
+  backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+  border: 3px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+html[data-theme="retro"] .glass-2 {
+  background: var(--surface-2) !important;
+  backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+  border: 2px solid var(--line);
+}
+
+/* ---------- buttons: chunky press blocks ---------- */
+html[data-theme="retro"] .btn {
+  border: 3px solid var(--glass-border);
+  box-shadow: 0 4px 0 var(--glass-border);
+  text-transform: uppercase;
+  transition: transform .08s, box-shadow .08s, background .2s;
+}
+html[data-theme="retro"] .btn:hover { transform: translateY(-1px); }
+html[data-theme="retro"] .btn:active { transform: translateY(4px); box-shadow: 0 0 0 var(--glass-border); }
+html[data-theme="retro"] .btn-primary { background: #e23b3b; color: #fff; }
+html[data-theme="retro"] [data-world="game"] .btn-primary { background: #36c24f; color: #06210d; }
+html[data-theme="retro"] .btn-neon { background: #ffc21f; color: #241a10; }
+html[data-theme="retro"] .btn-ghost { background: var(--surface-2); color: var(--ink); }
+
+/* ---------- pills / bars / fields ---------- */
+html[data-theme="retro"] .pill { border-radius: 6px; border: 2px solid currentColor; }
+html[data-theme="retro"] .bar {
+  border: 2px solid var(--glass-border); height: 14px !important; background: rgba(0,0,0,0.25);
+  border-radius: 4px; padding: 1px;
+}
+html[data-theme="retro"] .bar > i { border-radius: 2px; box-shadow: none !important; }
+html[data-theme="retro"] .field {
+  border: 3px solid var(--glass-border); border-radius: 6px;
+}
+html[data-theme="retro"] .dot { border-radius: 2px; }
+
+/* kill neon glow text, swap for crisp pixel color */
+html[data-theme="retro"] .neon-text { text-shadow: 2px 2px 0 rgba(0,0,0,0.5); }
+html[data-theme="retro"] img, html[data-theme="retro"] .ph { image-rendering: pixelated; }
+
+/* ---------- world backdrops ---------- */
+/* Teacher = bright overworld: sky + pixel clouds + block grid */
+html[data-theme="retro"] [data-world="teacher"].world::before {
+  background:
+    radial-gradient(circle at 18% 22%, #ffffffcc 0 9px, transparent 10px),
+    radial-gradient(circle at 24% 20%, #ffffffcc 0 13px, transparent 14px),
+    radial-gradient(circle at 30% 24%, #ffffffcc 0 9px, transparent 10px),
+    radial-gradient(circle at 76% 14%, #ffffffaa 0 11px, transparent 12px),
+    radial-gradient(circle at 82% 17%, #ffffffaa 0 15px, transparent 16px),
+    linear-gradient(180deg, transparent 60%, rgba(58,163,74,0.35) 100%);
+  opacity: 1;
+}
+/* Game = dark castle/underground: brick grid + faint stars */
+html[data-theme="retro"] [data-world="game"].world::before {
+  background:
+    radial-gradient(1px 1px at 20% 30%, #fff6, transparent),
+    radial-gradient(1px 1px at 70% 20%, #fff5, transparent),
+    radial-gradient(1px 1px at 40% 70%, #fff4, transparent),
+    radial-gradient(1px 1px at 85% 60%, #fff5, transparent),
+    linear-gradient(#ffffff0d 2px, transparent 2px),
+    linear-gradient(90deg, #ffffff0d 2px, transparent 2px);
+  background-size: auto, auto, auto, auto, 34px 34px, 34px 34px;
+  opacity: 1;
+}
+/* ground strip */
+html[data-theme="retro"] [data-world="game"].world::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 46px; z-index: 0; pointer-events: none;
+  background-color: #6b3f1e;
+  background-image:
+    linear-gradient(rgba(0,0,0,0.28) 2px, transparent 2px),
+    linear-gradient(90deg, rgba(0,0,0,0.28) 2px, transparent 2px);
+  background-size: 30px 23px;
+  box-shadow: inset 0 3px 0 rgba(255,255,255,0.15);
+}
+html[data-theme="retro"] [data-world="teacher"].world::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 30px; z-index: 0; pointer-events: none;
+  background: repeating-linear-gradient(90deg, #3aa34a 0 24px, #2f8c3e 24px 26px);
+  box-shadow: inset 0 3px 0 rgba(255,255,255,0.25);
+}
+
+/* nav active item: pixel highlight */
+html[data-theme="retro"] aside .btn { text-transform: none; }
+
+/* ---------- theme toggle button ---------- */
+#themeToggle {
+  position: fixed; right: 16px; bottom: 16px; z-index: 9999;
+  display: flex; align-items: center; gap: 7px;
+  padding: 9px 13px; cursor: pointer; opacity: .92;
+  font-family: 'Baloo Thai 2', sans-serif; font-weight: 700; font-size: 12px;
+  color: #fff; background: linear-gradient(135deg, #7a3fd0, #46c8ff);
+  border: 2px solid #0a0518; border-radius: 11px;
+  box-shadow: 0 6px 18px -6px rgba(0,0,0,0.6);
+  transition: transform .12s, box-shadow .12s, opacity .12s;
+}
+#themeToggle:hover { transform: translateY(-2px); opacity: 1; }
+#themeToggle:active { transform: translateY(1px); }
+#themeToggle .ico { width: 22px; height: 22px; display: grid; place-items: center; }
+html[data-theme="retro"] #themeToggle {
+  background: #ffc21f; color: #241a10; border: 3px solid #241a10;
+  border-radius: 6px; box-shadow: 0 4px 0 #241a10; text-transform: uppercase;
+}
+html[data-theme="retro"] #themeToggle:active { transform: translateY(4px); box-shadow: 0 0 0 #241a10; }
