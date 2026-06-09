@@ -3,12 +3,24 @@
    Abstract glowing landmass + 8 subject nodes (game board)
    ============================================================ */
 function TerritoryMap({ openStudent }) {
-  const { SUBJECTS, STUDENTS } = window.GC;
-  const avg = key => Math.round(STUDENTS.reduce((a, s) => a + s.game.territories[key], 0) / STUDENTS.length);
+  const { SUBJECTS } = window.GC;
+  const STUDENTS = useStudents();
+  const [toast, setToast] = React.useState(null);
+  const avg = key => STUDENTS.length ? Math.round(STUDENTS.reduce((a, s) => a + (s.game.territories[key] || 0), 0) / STUDENTS.length) : 0;
   const [sel, setSel] = React.useState('thai');
   const sub = SUBJECTS.find(s => s.key === sel);
   const subAvg = avg(sub.key);
-  const explorers = [...STUDENTS].sort((a, b) => b.game.territories[sub.key] - a.game.territories[sub.key]).slice(0, 4);
+  const explorers = [...STUDENTS].sort((a, b) => (b.game.territories[sub.key] || 0) - (a.game.territories[sub.key] || 0)).slice(0, 4);
+
+  function awardTerritory() {
+    const top = explorers.slice(0, 3);
+    const xpAmts = [100, 60, 30];
+    top.forEach((s, i) => {
+      window.GC.addScoreLog({ studentId: s.id, studentName: s.name, type: 'xp', amount: xpAmts[i], note: 'ความสำเร็จดินแดน ' + sub.th });
+    });
+    setToast(`มอบ XP ให้ ${top.length} นักสำรวจชั้นนำของ${sub.th}!`);
+    setTimeout(() => setToast(null), 2800);
+  }
 
   // connection order for energy lines (path through nodes)
   const links = [[0,1],[0,2],[1,3],[2,3],[3,4],[3,5],[4,5],[5,6],[5,7],[6,7]];
@@ -97,9 +109,14 @@ function TerritoryMap({ openStudent }) {
           ))}
         </div>
 
-        <button className="btn btn-neon" style={{ width: '100%', justifyContent: 'center', marginTop: 18 }}>
-          <Icon name="flag" size={17} color="#0a0a14" /> มอบความสำเร็จดินแดน
+        <button onClick={awardTerritory} className="btn btn-neon" style={{ width: '100%', justifyContent: 'center', marginTop: 18 }}>
+          <Icon name="flag" size={17} color="#0a0a14" /> มอบความสำเร็จดินแดน (Top 3)
         </button>
+        {toast && (
+          <div style={{ marginTop: 10, padding: '10px 14px', borderRadius: 10, background: 'color-mix(in oklch,var(--gold) 20%,transparent)', color: 'var(--gold)', fontSize: 12.5, textAlign: 'center', fontWeight: 600, animation: 'rise .2s ease-out' }}>
+            ⚡ {toast}
+          </div>
+        )}
       </div>
     </div>
   );

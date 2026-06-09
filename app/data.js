@@ -473,6 +473,53 @@
     try { localStorage.setItem(LS_ATT + '.' + dateStr, JSON.stringify(rows)); } catch {}
   }
 
+  // ---- student attendance summary (counts per status for the academic year) ----
+  function getStudentAttendanceSummary(id) {
+    const counts = { present: 0, late: 0, sick: 0, leave: 0, activity: 0, absent: 0 };
+    // saved localStorage dates take precedence over seeded data for that date
+    const savedDates = new Set();
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith(LS_ATT + '.')) {
+        const dateStr = k.replace(LS_ATT + '.', '');
+        savedDates.add(dateStr);
+        try {
+          const rows = JSON.parse(localStorage.getItem(k)) || [];
+          const r = rows.find(x => x.id === id);
+          if (r) counts[r.status] = (counts[r.status] || 0) + 1;
+        } catch {}
+      }
+    }
+    // seeded history for dates not overridden
+    for (const dateStr in ATTENDANCE_HISTORY) {
+      if (savedDates.has(dateStr)) continue;
+      const r = ATTENDANCE_HISTORY[dateStr].find(x => x.id === id);
+      if (r) counts[r.status] = (counts[r.status] || 0) + 1;
+    }
+    return counts;
+  }
+
+  // ---- class-wide totals (reactive — reads from getStudents) ----
+  function getClassTotals() {
+    const ss = getStudents();
+    return {
+      stars: ss.reduce((a, s) => a + (s.game.stars || 0), 0),
+      coins: ss.reduce((a, s) => a + (s.game.coins || 0), 0),
+      medals: ss.reduce((a, s) => a + (s.badges || 0), 0),
+      classXP: ss.reduce((a, s) => a + s.game.level * 1000 + s.game.xp, 0),
+    };
+  }
+
+  // ---- custom rewards (teacher-created) ----
+  const LS_CUSTOM_REWARDS = 'gcos.rewards.custom';
+  function getCustomRewards() { try { return JSON.parse(localStorage.getItem(LS_CUSTOM_REWARDS)) || []; } catch { return []; } }
+  function addCustomReward(r) {
+    const list = getCustomRewards();
+    list.push({ ...r, id: 'cr' + Date.now() });
+    localStorage.setItem(LS_CUSTOM_REWARDS, JSON.stringify(list));
+    window.dispatchEvent(new CustomEvent('gc:rewards-changed'));
+  }
+
   // list all school days between two dates
   function getSchoolDays(from, to) {
     const days = [];
@@ -492,6 +539,8 @@
     getStudents, addStudent, deleteStudent, updateStudent,
     getClass, updateClass,
     getScoreLog, addScoreLog,
+    getStudentAttendanceSummary, getClassTotals,
+    getCustomRewards, addCustomReward,
     ATTENDANCE_HISTORY, getAttendance, saveAttendance, getSchoolDays,
     YEAR_START, YEAR_END, isSchoolDay, dateKey,
   };

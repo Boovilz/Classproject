@@ -16,6 +16,12 @@ const GAME_NAV = [
 
 function GameShell({ route, setRoute, onPortal, children }) {
   const { CLASS } = window.GC;
+  const [totals, setTotals] = React.useState(() => window.GC.getClassTotals());
+  React.useEffect(() => {
+    const h = () => setTotals(window.GC.getClassTotals());
+    window.addEventListener('gc:students-changed', h);
+    return () => window.removeEventListener('gc:students-changed', h);
+  }, []);
   return (
     <div data-world="game" className="world row" style={{ position: 'absolute', inset: 0 }}>
       {/* rail */}
@@ -58,12 +64,11 @@ function GameShell({ route, setRoute, onPortal, children }) {
           </div>
           <div className="row" style={{ gap: 10 }}>
             <div className="row glass-2" style={{ borderRadius: 99, padding: '7px 14px', gap: 7 }}>
-              <Icon name="star" size={16} color="var(--gold)" fill="var(--gold)" /><span className="tech" style={{ color: '#fff', fontSize: 14 }}>312</span>
+              <Icon name="star" size={16} color="var(--gold)" fill="var(--gold)" /><span className="tech" style={{ color: '#fff', fontSize: 14 }}>{totals.stars.toLocaleString()}</span>
             </div>
             <div className="row glass-2" style={{ borderRadius: 99, padding: '7px 14px', gap: 7 }}>
-              <Icon name="coin" size={16} color="var(--gold)" /><span className="tech" style={{ color: '#fff', fontSize: 14 }}>1,480</span>
+              <Icon name="coin" size={16} color="var(--gold)" /><span className="tech" style={{ color: '#fff', fontSize: 14 }}>{totals.coins.toLocaleString()}</span>
             </div>
-            <button className="center glass-2" style={{ width: 40, height: 40, borderRadius: 12, cursor: 'pointer' }}><Icon name="settings" size={19} color="var(--ink-soft)" /></button>
           </div>
         </header>
         <main className="scroll" style={{ flex: 1, padding: '28px 28px 96px' }}>{children}</main>

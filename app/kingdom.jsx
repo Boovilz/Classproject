@@ -105,7 +105,15 @@ function ZoneGrid({ go }) {
 
 /* ---- Class core readout ---- */
 function ClassCore() {
-  const { CLASS_XP, CLASS_LEVEL, STUDENTS } = window.GC;
+  const STUDENTS = useStudents();
+  const [totals, setTotals] = React.useState(() => window.GC.getClassTotals());
+  React.useEffect(() => {
+    const h = () => setTotals(window.GC.getClassTotals());
+    window.addEventListener('gc:students-changed', h);
+    return () => window.removeEventListener('gc:students-changed', h);
+  }, []);
+  const classXP = totals.classXP;
+  const classLevel = Math.floor(classXP / 8000) + 1;
   return (
     <div className="scanlines" style={{ position: 'relative', padding: 18, clipPath: CLIP, background: 'oklch(0.22 0.07 288 / .7)', border: '1px solid oklch(0.55 0.14 290 / .35)' }}>
       <Brackets />
@@ -118,12 +126,12 @@ function ClassCore() {
           </div>
         </div>
         <div>
-          <div className="display" style={{ fontSize: 26, color: '#fff' }}>Lv.{CLASS_LEVEL}</div>
-          <div className="tech" style={{ fontSize: 12, color: 'var(--cyan)' }}>{CLASS_XP.toLocaleString()} XP</div>
+          <div className="display" style={{ fontSize: 26, color: '#fff' }}>Lv.{classLevel}</div>
+          <div className="tech" style={{ fontSize: 12, color: 'var(--cyan)' }}>{classXP.toLocaleString()} XP</div>
         </div>
       </div>
       <div className="row" style={{ gap: 8, marginTop: 14 }}>
-        {[['users', STUDENTS.length, 'UNITS'], ['trophy', 38, 'MEDALS'], ['fire', 12, 'STREAK']].map(([ic, v, l]) => (
+        {[['users', STUDENTS.length, 'UNITS'], ['trophy', totals.medals, 'MEDALS'], ['star', totals.stars, 'STARS']].map(([ic, v, l]) => (
           <div key={l} className="center col" style={{ flex: 1, padding: '8px 2px', background: 'oklch(0.16 0.04 285 / .6)', gap: 2, border: '1px solid oklch(0.5 0.1 285 / .25)' }}>
             <Icon name={ic} size={15} color="var(--cyan)" />
             <div className="tech" style={{ fontSize: 15, color: '#fff' }}>{v}</div>
@@ -163,11 +171,21 @@ function BossAlert({ go }) {
 
 /* ---- Class unit (pet) — interactive feed, -> pet screen ---- */
 function ClassUnit({ go }) {
-  const { PET, CLASS } = window.GC;
+  const { PET } = window.GC;
+  const STUDENTS = useStudents();
   const [fed, setFed] = React.useState(PET.fedToday);
   const [xp, setXp] = React.useState(PET.xp);
   const [bounce, setBounce] = React.useState(0);
-  const feed = (e) => { e.stopPropagation(); setBounce(b => b + 1); setFed(f => Math.min(CLASS.total, f + 1)); setXp(x => Math.min(PET.xpMax, x + 12)); };
+  const feed = (e) => {
+    e.stopPropagation();
+    setBounce(b => b + 1);
+    setFed(f => Math.min(STUDENTS.length, f + 1));
+    setXp(x => Math.min(PET.xpMax, x + 12));
+    // award 5 XP to a random student who hasn't fed yet today
+    const ss = window.GC.getStudents();
+    const lucky = ss[Math.floor(Math.random() * ss.length)];
+    if (lucky) window.GC.addScoreLog({ studentId: lucky.id, studentName: lucky.name, type: 'xp', amount: 5, note: 'ให้อาหารสัตว์เลี้ยงห้อง' });
+  };
   return (
     <div className="scanlines" style={{ position: 'relative', padding: 16, clipPath: CLIP, flex: 1, minHeight: 0,
       background: 'oklch(0.22 0.07 288 / .7)', border: '1px solid oklch(0.55 0.14 290 / .35)' }}>
@@ -192,7 +210,7 @@ function ClassUnit({ go }) {
           </div>
           <Bar value={xp} max={PET.xpMax} color={`oklch(0.76 0.17 ${PET.hue})`} glow />
           <div className="row" style={{ justifyContent: 'space-between', marginTop: 8, alignItems: 'center' }}>
-            <span className="tech" style={{ fontSize: 10, color: 'var(--muted)', letterSpacing: '.06em' }}>FED {fed}/{CLASS.total} TODAY</span>
+            <span className="tech" style={{ fontSize: 10, color: 'var(--muted)', letterSpacing: '.06em' }}>FED {fed}/{STUDENTS.length} TODAY</span>
             <button onClick={feed} className="btn btn-neon" style={{ padding: '5px 12px', fontSize: 11.5 }}><Icon name="heart" size={13} color="#0a0a14" /> ให้ XP</button>
           </div>
         </div>

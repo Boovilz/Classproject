@@ -5,6 +5,19 @@ function StudentProfile({ studentId, onClose, openStudent }) {
   const STUDENTS = useStudents();
   const { SUBJECTS, STATUSES, RANKS } = window.GC;
   const s = STUDENTS.find(x => x.id === studentId);
+
+  const [attSummary, setAttSummary] = React.useState(null);
+  const [awardType, setAwardType] = React.useState('xp');
+  const [awardAmt, setAwardAmt] = React.useState(20);
+  const [showAward, setShowAward] = React.useState(false);
+  const [toast, setToast] = React.useState(null);
+
+  React.useEffect(() => {
+    if (!studentId) return;
+    // compute once on open (may scan ~200 records)
+    setAttSummary(window.GC.getStudentAttendanceSummary(studentId));
+  }, [studentId]);
+
   if (!s) return null;
   const r = RANKS[s.game.rankIdx];
   const hue = s.game.hue;
@@ -13,10 +26,42 @@ function StudentProfile({ studentId, onClose, openStudent }) {
   const myRank = ranked.findIndex(x => x.id === s.id) + 1;
   const unlocked = SUBJECTS.filter(sub => s.game.territories[sub.key] >= 50).length;
 
+  function doAward() {
+    if (awardType === 'badge') {
+      window.GC.updateStudent(s.id, { badges: (s.badges || 0) + 1 });
+      showToast('มอบเหรียญตราให้ ' + s.nick + ' สำเร็จ!');
+    } else {
+      window.GC.addScoreLog({ studentId: s.id, studentName: s.name, type: awardType, amount: awardAmt, note: 'จากการ์ดโปรไฟล์' });
+      showToast(`+${awardAmt} ${awardType.toUpperCase()} → ${s.nick}`);
+    }
+    setShowAward(false);
+  }
+
+  function showToast(msg) {
+    setToast(msg);
+    setTimeout(() => setToast(null), 2500);
+  }
+
+  const attItems = attSummary
+    ? [['มา', (attSummary.present || 0) + (attSummary.late || 0), 'var(--st-present)'],
+       ['สาย', attSummary.late || 0, 'var(--st-late)'],
+       ['ป่วย', attSummary.sick || 0, 'var(--st-sick)'],
+       ['ขาด', attSummary.absent || 0, 'var(--st-absent)']]
+    : [['มา', '…', 'var(--st-present)'], ['สาย', '…', 'var(--st-late)'], ['ป่วย', '…', 'var(--st-sick)'], ['ขาด', '…', 'var(--st-absent)']];
+
   return (
     <div data-world="game" onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(8,6,18,0.72)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
       <div onClick={e => e.stopPropagation()} className="glass pop scroll" style={{ width: 'min(960px,96vw)', maxHeight: '92vh', borderRadius: 'var(--r-xl)', overflow: 'auto', position: 'relative',
         background: 'rgba(24,18,46,0.92)' }}>
+        {/* toast */}
+        {toast && (
+          <div style={{ position: 'fixed', bottom: 32, left: '50%', transform: 'translateX(-50%)', zIndex: 999,
+            background: 'linear-gradient(120deg,var(--gold),oklch(0.72 0.16 55))', color: '#1a1200',
+            padding: '10px 22px', borderRadius: 99, fontWeight: 700, fontSize: 14,
+            boxShadow: '0 8px 32px -8px var(--gold)', animation: 'rise .2s ease-out' }}>
+            ⚡ {toast}
+          </div>
+        )}
         {/* banner */}
         <div style={{ position: 'relative', padding: '28px 32px', overflow: 'hidden',
           background: `linear-gradient(120deg, oklch(0.5 0.2 ${hue}), oklch(0.4 0.18 ${(hue + 50) % 360}))` }}>
@@ -89,7 +134,7 @@ function StudentProfile({ studentId, onClose, openStudent }) {
               </div>
             </div>
 
-            {/* health + attendance summary (the bridge to teacher data) */}
+            {/* health + attendance summary */}
             <div className="col" style={{ gap: 16 }}>
               <div>
                 <h4 style={{ fontSize: 15, color: '#fff', marginBottom: 12 }}>สรุปสุขภาพ</h4>
@@ -108,9 +153,9 @@ function StudentProfile({ studentId, onClose, openStudent }) {
                 </div>
               </div>
               <div>
-                <h4 style={{ fontSize: 15, color: '#fff', marginBottom: 12 }}>สรุปการมาเรียน (เทอมนี้)</h4>
+                <h4 style={{ fontSize: 15, color: '#fff', marginBottom: 12 }}>สรุปการมาเรียน (ปีการศึกษา)</h4>
                 <div className="row glass-2" style={{ borderRadius: 'var(--r-md)', padding: 14, gap: 6 }}>
-                  {[['มา', 42, 'var(--st-present)'], ['สาย', 3, 'var(--st-late)'], ['ป่วย', 2, 'var(--st-sick)'], ['ขาด', 1, 'var(--st-absent)']].map(([l, v, c]) => (
+                  {attItems.map(([l, v, c]) => (
                     <div key={l} className="center col" style={{ flex: 1, gap: 4 }}>
                       <div className="display" style={{ fontSize: 22, color: c }}>{v}</div>
                       <div style={{ fontSize: 11, color: 'var(--muted)' }}>{l}</div>
@@ -122,10 +167,50 @@ function StudentProfile({ studentId, onClose, openStudent }) {
           </div>
 
           {/* actions */}
-          <div className="row" style={{ gap: 10, marginTop: 24, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-            <button className="btn btn-ghost"><Icon name="bolt" size={17} color="var(--cyan)" /> ให้ XP</button>
-            <button className="btn btn-ghost"><Icon name="star" size={17} color="var(--gold)" /> ให้ดาว</button>
-            <button className="btn btn-neon"><Icon name="trophy" size={17} color="#0a0a14" /> มอบเหรียญตรา</button>
+          <div className="col" style={{ gap: 12, marginTop: 24 }}>
+            <div className="row" style={{ gap: 10, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+              <button onClick={() => { setAwardType('xp'); setAwardAmt(20); setShowAward(t => !t); }} className="btn btn-ghost"
+                style={{ background: showAward && awardType !== 'badge' ? 'color-mix(in oklch,var(--cyan) 20%,transparent)' : undefined }}>
+                <Icon name="bolt" size={17} color="var(--cyan)" /> ให้ XP
+              </button>
+              <button onClick={() => { setAwardType('star'); setAwardAmt(1); setShowAward(t => !t); }} className="btn btn-ghost"
+                style={{ background: showAward && awardType === 'star' ? 'color-mix(in oklch,var(--gold) 20%,transparent)' : undefined }}>
+                <Icon name="star" size={17} color="var(--gold)" /> ให้ดาว
+              </button>
+              <button onClick={() => { setAwardType('badge'); setShowAward(false); doAward(); }} className="btn btn-neon">
+                <Icon name="trophy" size={17} color="#0a0a14" /> มอบเหรียญตรา
+              </button>
+            </div>
+
+            {/* inline award panel */}
+            {showAward && awardType !== 'badge' && (
+              <div className="glass-2 row pop" style={{ borderRadius: 'var(--r-md)', padding: '14px 18px', gap: 12, flexWrap: 'wrap', alignItems: 'center', justifyContent: 'flex-end',
+                borderLeft: '3px solid var(--gold)', animation: 'rise .18s ease-out' }}>
+                <span style={{ fontSize: 13, color: 'var(--gold)', fontWeight: 600 }}>
+                  มอบ {awardType === 'xp' ? '⚡ XP' : awardType === 'coin' ? '🪙 Coin' : '⭐ Star'} ให้ {s.nick}
+                </span>
+                <div className="row" style={{ gap: 4 }}>
+                  {[['xp','⚡ XP'],['coin','🪙 Coin'],['star','⭐ Star']].map(([t,l]) => (
+                    <button key={t} onClick={() => setAwardType(t)} className="btn"
+                      style={{ padding: '5px 11px', fontSize: 12, background: awardType === t ? 'var(--navy)' : 'var(--surface-2)', color: awardType === t ? '#fff' : 'var(--ink-soft)' }}>
+                      {l}
+                    </button>
+                  ))}
+                </div>
+                <div className="row" style={{ gap: 4 }}>
+                  {(awardType === 'star' ? [1,2,3,5] : [10,20,50,100]).map(v => (
+                    <button key={v} onClick={() => setAwardAmt(v)} className="btn"
+                      style={{ padding: '5px 10px', fontSize: 12, background: awardAmt === v ? 'var(--gold)' : 'var(--surface-2)', color: awardAmt === v ? '#1a1200' : 'var(--ink-soft)' }}>
+                      +{v}
+                    </button>
+                  ))}
+                </div>
+                <button onClick={doAward} className="btn"
+                  style={{ padding: '8px 18px', fontSize: 13, background: 'linear-gradient(120deg,var(--gold),oklch(0.72 0.16 55))', color: '#1a1200', fontWeight: 700 }}>
+                  มอบ +{awardAmt}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

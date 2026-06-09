@@ -335,7 +335,18 @@ function BossBattle() {
     });
   };
 
-  const reset = () => { setHp(MAX); setHits([]); setCombo(0); setWon(false); };
+  const reset = () => { setHp(MAX); setHits([]); setCombo(0); setWon(false); setRewarded(false); };
+  const [rewarded, setRewarded] = React.useState(false);
+  React.useEffect(() => {
+    if (won && !rewarded) {
+      setRewarded(true);
+      const ss = window.GC.getStudents();
+      ss.forEach(s => {
+        window.GC.addScoreLog({ studentId: s.id, studentName: s.name, type: 'xp', amount: 50, note: 'ชนะบอสไฟต์' });
+        window.GC.addScoreLog({ studentId: s.id, studentName: s.name, type: 'coin', amount: 20, note: 'ชนะบอสไฟต์' });
+      });
+    }
+  }, [won]);
   const pct = (hp / MAX) * 100;
 
   return (
