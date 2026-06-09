@@ -45,7 +45,7 @@ function GameShell({ route, setRoute, onPortal, children }) {
       </aside>
 
       {/* main */}
-      <div className="col" style={{ flex: 1, minWidth: 0, position: 'relative', zIndex: 1 }}>
+      <div className="col" style={{ flex: 1, minWidth: 0, minHeight: 0, overflow: 'hidden', position: 'relative', zIndex: 1 }}>
         <header className="row" style={{ padding: '16px 28px', justifyContent: 'space-between', gap: 16, borderBottom: '1px solid var(--line)' }}>
           <div className="row" style={{ gap: 12 }}>
             <span className="pill tech" style={{ background: 'color-mix(in oklch,var(--cyan) 16%,transparent)', color: 'var(--cyan)', letterSpacing: '.1em' }}>

@@ -75,7 +75,7 @@ function TeacherShell({ route, setRoute, onPortal, onLogout, children }) {
     <div data-world="teacher" className="world row" style={{ position: 'absolute', inset: 0 }}>
       {/* sidebar */}
       <aside className="col" style={{ width: 250, flex: 'none', padding: 18, gap: 8, position: 'relative', zIndex: 2,
-        borderRight: '1px solid var(--line)', background: 'var(--surface)', backdropFilter: 'blur(var(--glass-blur))' }}>
+        borderRight: '1px solid var(--line)', background: 'var(--surface)', backdropFilter: 'blur(var(--glass-blur))', overflowY: 'auto' }}>
         <div className="row" style={{ gap: 11, padding: '8px 8px 16px' }}>
           <div className="center" style={{ width: 40, height: 40, borderRadius: 12, background: 'linear-gradient(135deg, var(--navy), var(--navy-2))' }}>
             <Icon name="shield" size={22} color="#fff" />
@@ -139,7 +139,7 @@ function TeacherShell({ route, setRoute, onPortal, onLogout, children }) {
       {showEdit && <EditClassModal cls={cls} onClose={() => setShowEdit(false)} />}
 
       {/* main */}
-      <div className="col" style={{ flex: 1, minWidth: 0, position: 'relative', zIndex: 1 }}>
+      <div className="col" style={{ flex: 1, minWidth: 0, minHeight: 0, overflow: 'hidden', position: 'relative', zIndex: 1 }}>
         <header className="row" style={{ padding: '16px 28px', justifyContent: 'space-between', gap: 16,
           borderBottom: '1px solid var(--line)', background: 'var(--surface-2)', backdropFilter: 'blur(8px)' }}>
           <div>

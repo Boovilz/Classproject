@@ -35,6 +35,8 @@ function Attendance({ openStudent }) {
   const [picker, setPicker] = React.useState(null);
   const [dirty, setDirty] = React.useState(false);
   const [showBarcode, setShowBarcode] = React.useState(false);
+  const calBtnRef = React.useRef(null);
+  const [calDropPos, setCalDropPos] = React.useState({ top: 0, left: 0 });
 
   // reload rows when date changes
   React.useEffect(() => {
@@ -155,17 +157,17 @@ function Attendance({ openStudent }) {
           </button>
 
           {/* month label + calendar toggle */}
-          <div className="row" style={{ gap: 7, marginLeft: 4, alignItems: 'center', position: 'relative' }}>
-            <button onClick={() => setShowCal(c => !c)} className="row glass-2"
+          <div className="row" style={{ gap: 7, marginLeft: 4, alignItems: 'center' }}>
+            <button ref={calBtnRef} onClick={() => { if (!showCal && calBtnRef.current) { const r = calBtnRef.current.getBoundingClientRect(); setCalDropPos({ top: r.bottom + 6, left: r.left }); } setShowCal(c => !c); }} className="row glass-2"
               style={{ gap: 7, padding: '6px 12px', borderRadius: 10, cursor: 'pointer', border: 'none', color: 'var(--ink-soft)', fontSize: 13 }}>
               <Icon name="calendar" size={16} color="var(--muted)" />
               {TH_MONTHS_FULL[selDateObj.getMonth()]} {selDateObj.getFullYear()}
               <Icon name="chevD" size={14} color="var(--muted)" />
             </button>
 
-            {/* mini calendar dropdown */}
-            {showCal && (
-              <div className="glass pop" style={{ position: 'absolute', top: '110%', left: 0, zIndex: 50, borderRadius: 'var(--r-lg)', padding: 16, width: 280, boxShadow: '0 20px 50px -16px rgba(0,0,0,.4)' }}>
+            {/* mini calendar dropdown — rendered via portal to escape scroll clipping */}
+            {showCal && ReactDOM.createPortal(
+              <div className="glass pop" style={{ position: 'fixed', top: calDropPos.top, left: calDropPos.left, zIndex: 9999, borderRadius: 'var(--r-lg)', padding: 16, width: 280, boxShadow: '0 20px 50px -16px rgba(0,0,0,.4)' }}>
                 <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
                   <button onClick={() => setCalMonth(({y,m}) => m === 0 ? {y:y-1,m:11} : {y,m:m-1})}
                     style={{ border:'none',background:'transparent',cursor:'pointer',color:'var(--ink-soft)',fontSize:18,padding:'0 6px' }}>‹</button>
@@ -208,7 +210,7 @@ function Attendance({ openStudent }) {
                   ปีการศึกษา 2568 · เทอม 1 (พ.ค.–ต.ค. 68) · เทอม 2 (พ.ย. 68–มี.ค. 69)
                 </div>
               </div>
-            )}
+            , document.body)}
           </div>
         </div>
 
