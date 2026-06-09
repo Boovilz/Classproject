@@ -114,41 +114,167 @@ function Health() {
   );
 }
 
-function StudentsGrid({ openStudent }) {
-  const { STUDENTS, STATUSES } = window.GC;
+function AddStudentModal({ onClose }) {
+  const [form, setForm] = React.useState({ name: '', nick: '', gender: 'm', h: '130', w: '28' });
+  const [err, setErr] = React.useState('');
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  function submit(e) {
+    e.preventDefault();
+    if (!form.name.trim() || !form.nick.trim()) { setErr('กรุณากรอกชื่อและชื่อเล่น'); return; }
+    window.GC.addStudent({ ...form, h: +form.h, w: +form.w });
+    onClose();
+  }
+
+  const inp = { style: { width: '100%', padding: '9px 12px', borderRadius: 'var(--r-md)', border: '1.5px solid var(--surface-2)', background: 'var(--surface-1)', color: 'var(--ink)', fontSize: 14, outline: 'none', boxSizing: 'border-box' } };
+
   return (
-    <div className="col" style={{ gap: 16 }}>
-      <div className="row" style={{ justifyContent: 'space-between' }}>
-        <div className="row" style={{ gap: 8 }}>
-          {['ทั้งหมด', 'มาเรียน', 'ติดตาม'].map((t, i) => (
-            <button key={t} className="btn" style={{ padding: '8px 16px', fontSize: 13.5,
-              background: i === 0 ? 'linear-gradient(120deg,var(--navy),var(--navy-2))' : 'var(--surface-2)',
-              color: i === 0 ? '#fff' : 'var(--ink-soft)', boxShadow: 'none' }}>{t}</button>
-          ))}
+    <div style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,.55)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="glass col" style={{ borderRadius: 'var(--r-xl)', padding: 28, gap: 18, width: 360, maxWidth: '90vw' }}>
+        <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--ink)', fontFamily: 'var(--font-display)' }}>
+            <Icon name="plus" size={17} /> เพิ่มนักเรียนใหม่
+          </div>
+          <button onClick={onClose} className="btn btn-ghost" style={{ padding: '4px 8px', fontSize: 18, lineHeight: 1 }}>×</button>
         </div>
-        <button className="btn btn-ghost" style={{ fontSize: 13.5 }}><Icon name="plus" size={17} /> เพิ่มนักเรียน</button>
-      </div>
-      <div className="stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(190px,1fr))', gap: 14 }}>
-        {STUDENTS.map(s => {
-          const stat = STATUSES[s.status];
-          return (
-            <div key={s.id} onClick={() => openStudent(s.id)} className="glass col" style={{ borderRadius: 'var(--r-lg)', padding: 16, gap: 12, cursor: 'pointer', alignItems: 'center', textAlign: 'center', position: 'relative', transition: 'transform .2s' }}
-              onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-4px)'} onMouseLeave={e => e.currentTarget.style.transform = 'none'}>
-              <span className="pill" style={{ position: 'absolute', top: 10, right: 10, fontSize: 10.5, background: 'color-mix(in oklch,' + stat.color + ' 16%,transparent)', color: stat.color }}>{stat.short}</span>
-              <HeroAvatar student={s} size={68} />
-              <div>
-                <div style={{ fontSize: 14.5, fontWeight: 700, color: 'var(--ink)', fontFamily: 'var(--font-display)' }}>{s.nick}</div>
-                <div className="nowrap" style={{ fontSize: 11.5, color: 'var(--muted)', maxWidth: 150 }}>{s.name}</div>
-              </div>
-              <div className="row" style={{ gap: 12, fontSize: 12, color: 'var(--ink-soft)' }}>
-                <span className="row" style={{ gap: 4 }}><Icon name="bolt" size={13} color="var(--navy)" /> Lv.{s.game.level}</span>
-                <span className="row" style={{ gap: 4 }}><Icon name="heart" size={13} color="var(--st-sick)" /> {s.health.bmi}</span>
-              </div>
+
+        <form onSubmit={submit} className="col" style={{ gap: 12 }}>
+          <div className="col" style={{ gap: 5 }}>
+            <label style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--muted)' }}>ชื่อ-นามสกุล *</label>
+            <input {...inp} placeholder="เช่น ด.ช. สมชาย ใจดี" value={form.name} onChange={e => set('name', e.target.value)} />
+          </div>
+          <div className="col" style={{ gap: 5 }}>
+            <label style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--muted)' }}>ชื่อเล่น *</label>
+            <input {...inp} placeholder="เช่น เจ" value={form.nick} onChange={e => set('nick', e.target.value)} />
+          </div>
+          <div className="row" style={{ gap: 12 }}>
+            <div className="col" style={{ gap: 5, flex: 1 }}>
+              <label style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--muted)' }}>เพศ</label>
+              <select {...inp} value={form.gender} onChange={e => set('gender', e.target.value)}>
+                <option value="m">ชาย</option>
+                <option value="f">หญิง</option>
+              </select>
             </div>
-          );
-        })}
+            <div className="col" style={{ gap: 5, flex: 1 }}>
+              <label style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--muted)' }}>ส่วนสูง (ซม.)</label>
+              <input {...inp} type="number" min="80" max="200" value={form.h} onChange={e => set('h', e.target.value)} />
+            </div>
+            <div className="col" style={{ gap: 5, flex: 1 }}>
+              <label style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--muted)' }}>น้ำหนัก (กก.)</label>
+              <input {...inp} type="number" min="10" max="100" step="0.1" value={form.w} onChange={e => set('w', e.target.value)} />
+            </div>
+          </div>
+          {err && <div style={{ fontSize: 12.5, color: 'var(--st-sick)' }}>{err}</div>}
+          <div className="row" style={{ gap: 10, justifyContent: 'flex-end', marginTop: 4 }}>
+            <button type="button" onClick={onClose} className="btn btn-ghost">ยกเลิก</button>
+            <button type="submit" className="btn" style={{ background: 'linear-gradient(120deg,var(--navy),var(--navy-2))', color: '#fff' }}>
+              <Icon name="plus" size={15} /> เพิ่มนักเรียน
+            </button>
+          </div>
+        </form>
       </div>
     </div>
+  );
+}
+
+function StudentsGrid({ openStudent }) {
+  const { STATUSES, getStudents, deleteStudent } = window.GC;
+  const [students, setStudents] = React.useState(getStudents);
+  const [filter, setFilter] = React.useState('all');
+  const [showAdd, setShowAdd] = React.useState(false);
+  const [confirmDel, setConfirmDel] = React.useState(null); // student id
+
+  React.useEffect(() => {
+    const refresh = () => setStudents(getStudents());
+    window.addEventListener('gc:students-changed', refresh);
+    return () => window.removeEventListener('gc:students-changed', refresh);
+  }, []);
+
+  const filtered = filter === 'all' ? students
+    : filter === 'present' ? students.filter(s => s.status === 'present' || s.status === 'late')
+    : students.filter(s => s.status === 'absent' || s.status === 'sick');
+
+  function handleDelete(e, id) {
+    e.stopPropagation();
+    setConfirmDel(id);
+  }
+
+  function confirmDelete() {
+    deleteStudent(confirmDel);
+    setConfirmDel(null);
+  }
+
+  const TABS = [['all','ทั้งหมด'],['present','มาเรียน'],['watch','ติดตาม']];
+
+  return (
+    <>
+      <div className="col" style={{ gap: 16 }}>
+        <div className="row" style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+          <div className="row" style={{ gap: 8 }}>
+            {TABS.map(([k, th]) => (
+              <button key={k} onClick={() => setFilter(k)} className="btn" style={{ padding: '8px 16px', fontSize: 13.5,
+                background: filter === k ? 'linear-gradient(120deg,var(--navy),var(--navy-2))' : 'var(--surface-2)',
+                color: filter === k ? '#fff' : 'var(--ink-soft)', boxShadow: 'none' }}>{th}</button>
+            ))}
+          </div>
+          <button onClick={() => setShowAdd(true)} className="btn" style={{ fontSize: 13.5, background: 'linear-gradient(120deg,var(--navy),var(--navy-2))', color: '#fff' }}>
+            <Icon name="plus" size={17} /> เพิ่มนักเรียน
+          </button>
+        </div>
+
+        <div style={{ fontSize: 12.5, color: 'var(--muted)' }}>ทั้งหมด {students.length} คน · แสดง {filtered.length} คน</div>
+
+        <div className="stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(190px,1fr))', gap: 14 }}>
+          {filtered.map(s => {
+            const stat = STATUSES[s.status] || STATUSES['present'];
+            return (
+              <div key={s.id} onClick={() => openStudent(s.id)} className="glass col"
+                style={{ borderRadius: 'var(--r-lg)', padding: 16, gap: 12, cursor: 'pointer', alignItems: 'center', textAlign: 'center', position: 'relative', transition: 'transform .2s' }}
+                onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-4px)'}
+                onMouseLeave={e => e.currentTarget.style.transform = 'none'}>
+                <span className="pill" style={{ position: 'absolute', top: 10, right: 36, fontSize: 10.5,
+                  background: 'color-mix(in oklch,' + stat.color + ' 16%,transparent)', color: stat.color }}>{stat.short}</span>
+                <button onClick={e => handleDelete(e, s.id)}
+                  style={{ position: 'absolute', top: 8, right: 8, width: 22, height: 22, borderRadius: 6,
+                    border: 'none', background: 'color-mix(in oklch,var(--st-absent) 18%,transparent)',
+                    color: 'var(--st-absent)', fontSize: 14, lineHeight: 1, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  title="ลบนักเรียน">×</button>
+                <HeroAvatar student={s} size={68} />
+                <div>
+                  <div style={{ fontSize: 14.5, fontWeight: 700, color: 'var(--ink)', fontFamily: 'var(--font-display)' }}>{s.nick}</div>
+                  <div className="nowrap" style={{ fontSize: 11.5, color: 'var(--muted)', maxWidth: 150 }}>{s.name}</div>
+                </div>
+                <div className="row" style={{ gap: 12, fontSize: 12, color: 'var(--ink-soft)' }}>
+                  <span className="row" style={{ gap: 4 }}><Icon name="bolt" size={13} color="var(--navy)" /> Lv.{s.game.level}</span>
+                  <span className="row" style={{ gap: 4 }}><Icon name="heart" size={13} color="var(--st-sick)" /> {s.health.bmi}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {showAdd && <AddStudentModal onClose={() => setShowAdd(false)} />}
+
+      {confirmDel && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 400, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="glass col" style={{ borderRadius: 'var(--r-xl)', padding: 28, gap: 16, width: 320, textAlign: 'center' }}>
+            <div style={{ fontSize: 36 }}>⚠️</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--ink)' }}>ยืนยันการลบนักเรียน?</div>
+            <div style={{ fontSize: 13.5, color: 'var(--muted)' }}>
+              {students.find(s => s.id === confirmDel)?.name}<br/>การกระทำนี้ไม่สามารถกู้คืนได้
+            </div>
+            <div className="row" style={{ gap: 10, justifyContent: 'center', marginTop: 4 }}>
+              <button onClick={() => setConfirmDel(null)} className="btn btn-ghost">ยกเลิก</button>
+              <button onClick={confirmDelete} className="btn" style={{ background: 'var(--st-absent)', color: '#fff' }}>
+                ลบออก
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 

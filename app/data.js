@@ -265,10 +265,67 @@
     { key: 'guild',     th: 'หอสมาคม',       sub: 'การ์ดฮีโร่',        route: 'guild',     icon: 'users',  hue: 270, pos: [67, 82] },
   ];
 
+  // ---- student CRUD with localStorage persistence ----
+  const LS_DEL = 'gcos.students.deleted';
+  const LS_ADD = 'gcos.students.added';
+
+  function loadDeleted() { try { return new Set(JSON.parse(localStorage.getItem(LS_DEL)) || []); } catch { return new Set(); } }
+  function loadAdded()   { try { return JSON.parse(localStorage.getItem(LS_ADD)) || []; } catch { return []; } }
+
+  function makeStudent(data, idx) {
+    const h = +(data.h || 130); const w = +(data.w || 28);
+    const bmi = +(w / Math.pow(h / 100, 2)).toFixed(1);
+    const nutrition = bmi < 14 ? 'ผอม' : bmi > 18.5 ? 'ท้วม' : 'สมส่วน';
+    const terr = {};
+    SUBJECTS.forEach(s => { terr[s.key] = 0; });
+    return {
+      id: data.id || ('C' + Date.now() + idx),
+      no: data.no,
+      name: data.name, nick: data.nick, gender: data.gender || 'm',
+      status: 'present', live: 'present',
+      welfare: { milk: false, brush: false, lunch: false },
+      health: { w, h, bmi, nutrition, weightHist: [], heightHist: [] },
+      game: { level: 1, xp: 0, xpMax: 1000, rank: 'bronze', rankIdx: 0,
+        stars: 0, coins: 0, tier: tierOf(1), territories: terr,
+        hue: Math.floor(Math.random() * 360) },
+      badges: 0,
+      _custom: true,
+    };
+  }
+
+  function getStudents() {
+    const deleted = loadDeleted();
+    const added = loadAdded();
+    const base = STUDENTS.filter(s => !deleted.has(s.id));
+    const custom = added.map((d, i) => makeStudent(d, i));
+    return [...base, ...custom];
+  }
+
+  function addStudent(data) {
+    const added = loadAdded();
+    const all = getStudents();
+    data.no = all.length + 1;
+    data.id = 'C' + Date.now();
+    added.push(data);
+    localStorage.setItem(LS_ADD, JSON.stringify(added));
+    window.dispatchEvent(new CustomEvent('gc:students-changed'));
+  }
+
+  function deleteStudent(id) {
+    const deleted = loadDeleted();
+    deleted.add(id);
+    localStorage.setItem(LS_DEL, JSON.stringify([...deleted]));
+    // also remove from added list if it's a custom student
+    const added = loadAdded().filter(d => d.id !== id);
+    localStorage.setItem(LS_ADD, JSON.stringify(added));
+    window.dispatchEvent(new CustomEvent('gc:students-changed'));
+  }
+
   window.GC = {
     STATUSES, LIVE, RANKS, TIERS, tierOf, SUBJECTS, REWARDS,
     STUDENTS, CLASS, WEEK_TREND,
     CLASS_XP, CLASS_LEVEL, SEASON, PET, QUESTS, ACHIEVEMENTS, KINGDOM_ZONES,
     BOSS, SEASONS, SEASON_TRACK,
+    getStudents, addStudent, deleteStudent,
   };
 })();
