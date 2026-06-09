@@ -159,7 +159,12 @@ function ScoreHistory({ openStudent }) {
                   <HeroAvatar student={s} size={36} />
                   <div style={{ minWidth: 0 }}>
                     <div className="nowrap" style={{ fontSize: 14, fontWeight: 600, color: '#fff' }}>{s.name}</div>
-                    <div style={{ fontSize: 11, color: 'var(--muted)' }}>"{s.nick}" {s.code ? '· #' + s.code : ''}</div>
+                    <div className="row" style={{ gap: 6, marginTop: 2, flexWrap: 'wrap' }}>
+                      {(() => { const t = window.GC.getTitleForStudent(s); return (
+                        <span className="pill" style={{ fontSize: 9.5, padding: '1px 6px', background: `color-mix(in oklch,oklch(0.7 0.16 ${t.hue}) 16%,transparent)`, color: `oklch(0.82 0.14 ${t.hue})` }}>{t.th}</span>
+                      ); })()}
+                      <span style={{ fontSize: 10.5, color: 'var(--muted)' }}>"{s.nick}"</span>
+                    </div>
                   </div>
                 </div>
                 <div style={{ width: 90, textAlign: 'center' }}>

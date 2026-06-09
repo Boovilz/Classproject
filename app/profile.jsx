@@ -7,6 +7,7 @@ function StudentProfile({ studentId, onClose, openStudent }) {
   const s = STUDENTS.find(x => x.id === studentId);
 
   const [attSummary, setAttSummary] = React.useState(null);
+  const [streak, setStreak] = React.useState(0);
   const [awardType, setAwardType] = React.useState('xp');
   const [awardAmt, setAwardAmt] = React.useState(20);
   const [showAward, setShowAward] = React.useState(false);
@@ -14,14 +15,15 @@ function StudentProfile({ studentId, onClose, openStudent }) {
 
   React.useEffect(() => {
     if (!studentId) return;
-    // compute once on open (may scan ~200 records)
     setAttSummary(window.GC.getStudentAttendanceSummary(studentId));
+    setStreak(window.GC.getStudentStreak(studentId));
   }, [studentId]);
 
   if (!s) return null;
   const r = RANKS[s.game.rankIdx];
   const hue = s.game.hue;
   const stat = STATUSES[s.status];
+  const title = window.GC.getTitleForStudent(s);
   const ranked = [...STUDENTS].sort((a, b) => (b.game.level * 1000 + b.game.xp) - (a.game.level * 1000 + a.game.xp));
   const myRank = ranked.findIndex(x => x.id === s.id) + 1;
   const unlocked = SUBJECTS.filter(sub => s.game.territories[sub.key] >= 50).length;
@@ -80,10 +82,18 @@ function StudentProfile({ studentId, onClose, openStudent }) {
                 </span>
               </div>
               <h2 style={{ fontSize: 34, color: '#fff', marginTop: 10, lineHeight: 1.05 }}>{s.name}</h2>
-              <div className="row" style={{ gap: 10, marginTop: 8 }}>
+              <div className="row" style={{ gap: 10, marginTop: 8, flexWrap: 'wrap' }}>
                 <RankBadge rank={s.game.rank} />
                 <span className="pill tech" style={{ background: 'rgba(0,0,0,.22)', color: '#fff' }}>Lv.{s.game.level} · {s.game.tier.th}</span>
                 <span className="pill tech" style={{ background: 'rgba(0,0,0,.22)', color: '#fff' }}>อันดับ #{myRank}</span>
+                <span className="pill" style={{ background: `color-mix(in oklch,oklch(0.7 0.16 ${title.hue}) 30%,rgba(0,0,0,.2))`, color: `oklch(0.92 0.12 ${title.hue})`, fontWeight: 700 }}>
+                  <Icon name={title.icon} size={12} color={`oklch(0.92 0.12 ${title.hue})`} /> {title.th}
+                </span>
+                {streak > 0 && (
+                  <span className="pill" style={{ background: 'color-mix(in oklch,oklch(0.7 0.2 30) 30%,rgba(0,0,0,.2))', color: 'oklch(0.92 0.18 45)', fontWeight: 700 }}>
+                    🔥 Streak ×{streak}
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -102,7 +112,7 @@ function StudentProfile({ studentId, onClose, openStudent }) {
         {/* body */}
         <div style={{ padding: 28 }}>
           {/* stat tiles */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 22 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 12, marginBottom: 22 }}>
             {[['star', s.game.stars, 'ดาว', 'var(--gold)'], ['coin', s.game.coins, 'เหรียญ', 'var(--gold)'], ['trophy', s.badges, 'เหรียญตรา', 'var(--cyan)'], ['map', unlocked + '/8', 'ดินแดน', 'var(--purple)']].map(([ic, v, l, c]) => (
               <div key={l} className="center col glass-2" style={{ padding: '16px 8px', borderRadius: 'var(--r-md)', gap: 6 }}>
                 <Icon name={ic} size={22} color={c} fill={ic === 'star' ? c : 'none'} />
@@ -110,6 +120,13 @@ function StudentProfile({ studentId, onClose, openStudent }) {
                 <div style={{ fontSize: 11.5, color: 'var(--muted)' }}>{l}</div>
               </div>
             ))}
+            <div className="center col glass-2" style={{ padding: '16px 8px', borderRadius: 'var(--r-md)', gap: 6,
+              background: streak > 0 ? 'color-mix(in oklch,oklch(0.6 0.2 30) 14%,transparent)' : undefined,
+              border: streak > 0 ? '1px solid oklch(0.6 0.2 30 / .35)' : undefined }}>
+              <span style={{ fontSize: 20 }}>🔥</span>
+              <div className="display" style={{ fontSize: 24, color: streak > 0 ? 'oklch(0.88 0.18 45)' : 'var(--muted)' }}>{streak}</div>
+              <div style={{ fontSize: 11.5, color: 'var(--muted)' }}>Streak</div>
+            </div>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 22 }}>

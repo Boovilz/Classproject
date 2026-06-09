@@ -531,11 +531,84 @@
     return days;
   }
 
+  // ---- titles (earned by meeting conditions, highest match wins) ----
+  const TITLES = [
+    { key: 'newcomer',   th: 'นักสำรวจรุ่นใหม่',    en: 'New Explorer',       hue: 200, icon: 'map',    condition: s => s.game.level >= 1 },
+    { key: 'reader',     th: 'ราชานักอ่าน',          en: 'Reading King',        hue: 12,  icon: 'book',   condition: s => (s.game.territories?.thai  || 0) >= 60 },
+    { key: 'mathwizard', th: 'จอมเวทคณิตศาสตร์',    en: 'Math Wizard',         hue: 265, icon: 'calc',   condition: s => (s.game.territories?.math  || 0) >= 60 },
+    { key: 'helper',     th: 'ผู้พิทักษ์มิตรภาพ',    en: 'Guardian of Friends', hue: 350, icon: 'heart',  condition: s => (s.game.stars  || 0) >= 20 },
+    { key: 'guardian',   th: 'ผู้พิทักษ์ความรู้',    en: 'Knowledge Guardian',  hue: 150, icon: 'shield', condition: s => s.game.level >= 10 },
+    { key: 'champion',   th: 'แชมป์แห่งอาณาจักร',   en: 'Kingdom Champion',    hue: 50,  icon: 'crown',  condition: s => s.game.level >= 20 },
+    { key: 'grandmaster',th: 'มหาจอมยุทธ์',          en: 'Grand Master',        hue: 280, icon: 'spark',  condition: s => s.game.level >= 20 && (s.game.xp || 0) >= 800 },
+  ];
+  function getTitleForStudent(s) {
+    const matched = TITLES.filter(t => t.condition(s));
+    return matched[matched.length - 1] || TITLES[0];
+  }
+
+  // ---- consecutive present-day streak ----
+  function getStudentStreak(studentId) {
+    const present = new Set(['present', 'late', 'activity']);
+    // collect from localStorage saves
+    const saved = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k || !k.startsWith(LS_ATT + '.')) continue;
+      const dateStr = k.replace(LS_ATT + '.', '');
+      try {
+        const rows = JSON.parse(localStorage.getItem(k)) || [];
+        const r = rows.find(x => x.id === studentId);
+        if (r) saved[dateStr] = r.status;
+      } catch {}
+    }
+    // collect from seeded history (not overridden)
+    const all = { ...Object.fromEntries(
+      Object.entries(ATTENDANCE_HISTORY).map(([d, rows]) => {
+        const r = rows.find(x => x.id === studentId);
+        return [d, r ? r.status : null];
+      }).filter(([, v]) => v)
+    ), ...saved };
+    const sorted = Object.keys(all).sort((a, b) => b.localeCompare(a));
+    let streak = 0, prev = null;
+    for (const date of sorted) {
+      if (!present.has(all[date])) break;
+      if (prev) {
+        const diff = Math.round((new Date(prev) - new Date(date)) / 86400000);
+        if (diff > 3) break;
+      }
+      streak++;
+      prev = date;
+    }
+    return streak;
+  }
+
+  // ---- reactive achievements (computed from live student data) ----
+  function getAchievements() {
+    const ss = getStudents();
+    function topBy(fn) { return [...ss].sort((a, b) => fn(b) - fn(a))[0]; }
+    const log = getScoreLog();
+    const entriesById = {};
+    log.forEach(e => { if (e.studentId) entriesById[e.studentId] = (entriesById[e.studentId] || 0) + 1; });
+    const topEntries = [...ss].sort((a, b) => (entriesById[b.id] || 0) - (entriesById[a.id] || 0))[0];
+    const topStreak = [...ss].sort((a, b) => getStudentStreak(b.id) - getStudentStreak(a.id))[0];
+    return [
+      { key: 'mvp',       th: 'MVP แห่งฤดูกาล',       icon: 'crown',    hue: 50,  holder: topBy(s => s.game.level * 1000 + s.game.xp) },
+      { key: 'helper',    th: 'ผู้ช่วยยอดเยี่ยม',      icon: 'heart',    hue: 350, holder: topBy(s => s.game.stars) },
+      { key: 'reader',    th: 'ราชานักอ่าน',           icon: 'book',     hue: 12,  holder: topBy(s => s.game.territories.thai) },
+      { key: 'mathwizard',th: 'จอมเวทคณิตศาสตร์',     icon: 'calc',     hue: 265, holder: topBy(s => s.game.territories.math) },
+      { key: 'attend',    th: 'ฮีโร่มาเรียน',          icon: 'check',    hue: 150, holder: topBy(s => (s.status === 'present' ? 1 : 0) * 100 + s.badges) },
+      { key: 'coder',     th: 'ฮีโร่เทคโนโลยี',       icon: 'tool',     hue: 230, holder: topBy(s => s.game.territories.career) },
+      { key: 'quester',   th: 'นักล่าเควสต์',          icon: 'report',   hue: 88,  holder: topEntries },
+      { key: 'streak',    th: 'ราชาสายขยัน',           icon: 'fire',     hue: 22,  holder: topStreak },
+    ];
+  }
+
   window.GC = {
     STATUSES, LIVE, RANKS, TIERS, tierOf, SUBJECTS, REWARDS,
     STUDENTS, CLASS, WEEK_TREND,
     CLASS_XP, CLASS_LEVEL, SEASON, PET, QUESTS, ACHIEVEMENTS, KINGDOM_ZONES,
     BOSS, SEASONS, SEASON_TRACK,
+    TITLES, getTitleForStudent, getStudentStreak, getAchievements,
     getStudents, addStudent, deleteStudent, updateStudent,
     getClass, updateClass,
     getScoreLog, addScoreLog,

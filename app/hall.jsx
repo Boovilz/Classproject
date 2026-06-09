@@ -3,7 +3,14 @@
    ============================================================ */
 function HallOfFame({ openStudent }) {
   const STUDENTS = useStudents();
-  const { ACHIEVEMENTS } = window.GC;
+  const [log, setLog] = React.useState(() => window.GC.getScoreLog());
+  React.useEffect(() => {
+    const h = () => setLog(window.GC.getScoreLog());
+    window.addEventListener('gc:score-added', h);
+    window.addEventListener('gc:students-changed', h);
+    return () => { window.removeEventListener('gc:score-added', h); window.removeEventListener('gc:students-changed', h); };
+  }, []);
+  const achievements = React.useMemo(() => window.GC.getAchievements(), [STUDENTS, log]);
   const ranked = [...STUDENTS].sort((a, b) => (b.game.level * 1000 + b.game.xp) - (a.game.level * 1000 + a.game.xp));
   const podium = [ranked[1], ranked[0], ranked[2]];   // 2nd, 1st, 3rd
   const heights = [128, 168, 104];
@@ -38,6 +45,9 @@ function HallOfFame({ openStudent }) {
               <div className="center col" style={{ gap: 3 }}>
                 <div className="display" style={{ fontSize: 15, color: '#fff' }}>{s.nick}</div>
                 <RankBadge rank={s.game.rank} size="sm" />
+                {(() => { const t = window.GC.getTitleForStudent(s); return (
+                  <span className="pill" style={{ fontSize: 9.5, marginTop: 2, background: `color-mix(in oklch,oklch(0.7 0.16 ${t.hue}) 18%,transparent)`, color: `oklch(0.82 0.14 ${t.hue})` }}>{t.th}</span>
+                ); })()}
               </div>
               <div className="center col" style={{ width: '100%', height: heights[i], borderRadius: '12px 12px 0 0', justifyContent: 'flex-start', paddingTop: 14, gap: 4,
                 background: `linear-gradient(180deg, color-mix(in oklch,${medal[i]} 30%,transparent), color-mix(in oklch,${medal[i]} 8%,transparent))`,
@@ -55,7 +65,10 @@ function HallOfFame({ openStudent }) {
       <div>
         <h3 style={{ fontSize: 17, color: '#fff', marginBottom: 14 }}>🏅 ผู้ครองตำแหน่งแห่งฤดูกาล</h3>
         <div className="stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(250px,1fr))', gap: 14 }}>
-          {ACHIEVEMENTS.map(a => (
+          {achievements.map(a => {
+            if (!a.holder) return null;
+            const title = window.GC.getTitleForStudent(a.holder);
+            return (
             <div key={a.key} onClick={() => openStudent(a.holder.id)} className="glass scanlines row" style={{ borderRadius: 'var(--r-lg)', padding: 16, gap: 14, cursor: 'pointer', position: 'relative', overflow: 'hidden', transition: 'transform .2s' }}
               onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-4px)'} onMouseLeave={e => e.currentTarget.style.transform = 'none'}>
               <div style={{ position: 'absolute', top: -26, right: -26, width: 90, height: 90, borderRadius: '50%', background: `oklch(0.72 0.16 ${a.hue})`, opacity: .18, filter: 'blur(20px)' }} />
@@ -69,10 +82,14 @@ function HallOfFame({ openStudent }) {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <span className="pill" style={{ fontSize: 10.5, background: `color-mix(in oklch,oklch(0.7 0.16 ${a.hue}) 20%,transparent)`, color: `oklch(0.78 0.14 ${a.hue})`, marginBottom: 6 }}>{a.th}</span>
                 <div className="nowrap" style={{ fontSize: 14.5, fontWeight: 700, color: '#fff', fontFamily: 'var(--font-display)' }}>{a.holder.name}</div>
-                <div className="tech" style={{ fontSize: 11, color: 'var(--muted)' }}>Lv.{a.holder.game.level} · {a.holder.game.tier.th}</div>
+                <div className="tech" style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 3 }}>Lv.{a.holder.game.level} · {a.holder.game.tier.th}</div>
+                <span className="pill" style={{ fontSize: 10, background: `color-mix(in oklch,oklch(0.7 0.16 ${title.hue}) 16%,transparent)`, color: `oklch(0.82 0.14 ${title.hue})` }}>
+                  <Icon name={title.icon} size={10} color={`oklch(0.82 0.14 ${title.hue})`} /> {title.th}
+                </span>
               </div>
             </div>
-          ))}
+          );})}
+        </div>
         </div>
       </div>
     </div>
