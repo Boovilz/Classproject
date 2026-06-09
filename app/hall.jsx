@@ -90,7 +90,6 @@ function HallOfFame({ openStudent }) {
             </div>
           );})}
         </div>
-        </div>
       </div>
     </div>
   );
