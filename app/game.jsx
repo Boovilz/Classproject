@@ -5,6 +5,7 @@ const GAME_NAV = [
   { key: 'home',      th: 'อาณาจักร',  icon: 'crown' },
   { key: 'territory', th: 'แผนที่',    icon: 'map' },
   { key: 'boss',      th: 'สู้บอส',    icon: 'fire' },
+  { key: 'pet',       th: 'สัตว์เลี้ยง', icon: 'heart' },
   { key: 'season',    th: 'ฤดูกาล',    icon: 'calc' },
   { key: 'games',     th: 'สนามเกม',   icon: 'game' },
   { key: 'quests',    th: 'เควสต์',    icon: 'report' },
