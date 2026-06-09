@@ -88,18 +88,36 @@ function Icon({ name, size = 20, sw = 1.9, color = 'currentColor', style, fill =
 /* ---------- Avatar placeholder (RPG hero portrait) ---------- */
 function HeroAvatar({ student, size = 64, ring, glow }) {
   const hue = student?.game?.hue ?? 270;
-  const id = 'av' + (student?.id || Math.round(hue));
   const bg = `radial-gradient(120% 120% at 50% 18%, oklch(0.72 0.16 ${hue}), oklch(0.42 0.18 ${(hue + 40) % 360}))`;
+  const shadow = glow
+    ? `0 0 0 2px ${ring || 'rgba(255,255,255,.35)'}, 0 0 24px -4px oklch(0.7 0.2 ${hue})`
+    : ring ? `0 0 0 2px ${ring}` : 'none';
+  const radius = size * 0.28;
+  const baseStyle = { width: size, height: size, borderRadius: radius, overflow: 'hidden', flex: 'none', boxShadow: shadow, position: 'relative' };
+
+  /* real photo */
+  if (student?.photo) {
+    return (
+      <div style={{ ...baseStyle, background: bg }}>
+        <img src={student.photo} alt={student.nick} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+      </div>
+    );
+  }
+
+  /* emoji avatar */
+  if (student?.avatar) {
+    return (
+      <div className="center" style={{ ...baseStyle, background: bg }}>
+        <span style={{ fontSize: size * 0.52, lineHeight: 1, userSelect: 'none' }}>{student.avatar}</span>
+      </div>
+    );
+  }
+
+  /* gradient silhouette fallback */
   return (
-    <div className="center" style={{
-      width: size, height: size, borderRadius: size * 0.28, position: 'relative',
-      background: bg, overflow: 'hidden', flex: 'none',
-      boxShadow: glow ? `0 0 0 2px ${ring || 'rgba(255,255,255,.35)'}, 0 0 24px -4px oklch(0.7 0.2 ${hue})` : (ring ? `0 0 0 2px ${ring}` : 'none'),
-    }}>
-      {/* striped placeholder texture */}
+    <div className="center" style={{ ...baseStyle, background: bg }}>
       <div style={{ position: 'absolute', inset: 0, opacity: .25,
         backgroundImage: 'repeating-linear-gradient(135deg,#fff2 0 8px,#fff0 8px 16px)' }} />
-      {/* simple hero silhouette: head + shoulders */}
       <svg viewBox="0 0 64 64" width={size} height={size} style={{ position: 'absolute', inset: 0 }}>
         <circle cx="32" cy="25" r="11" fill="rgba(255,255,255,0.92)" />
         <path d="M14 60c0-11 8-18 18-18s18 7 18 18z" fill="rgba(255,255,255,0.92)" />

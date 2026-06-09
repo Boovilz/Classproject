@@ -1,6 +1,113 @@
 /* ============================================================
    TEACHER — Health monitoring + Students grid
    ============================================================ */
+
+/* preset avatar emoji grid */
+const AVATAR_PRESETS = [
+  '🦁','🐯','🐻','🐼','🐨','🦊','🐺','🦝',
+  '🐸','🐧','🦆','🦉','🦋','🐬','🦄','🐲',
+  '🧙','🧚','🧜','🧝','🦸','🦹','🤖','👾',
+  '🌟','⚡','🔥','💎','🌈','🎮','🏆','🎯',
+];
+
+function AvatarPickerModal({ current, currentPhoto, onSelect, onClose }) {
+  const [tab, setTab] = React.useState('emoji');
+  const [preview, setPreview] = React.useState(currentPhoto || null);
+  const [uploading, setUploading] = React.useState(false);
+  const fileRef = React.useRef();
+
+  function handleFile(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploading(true);
+    const reader = new FileReader();
+    reader.onload = evt => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 240;
+        const scale = Math.min(MAX / img.width, MAX / img.height, 1);
+        const w = Math.round(img.width * scale);
+        const h = Math.round(img.height * scale);
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+        setPreview(dataUrl);
+        setUploading(false);
+      };
+      img.src = evt.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 400, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="glass col" style={{ borderRadius: 'var(--r-xl)', padding: 28, gap: 16, width: 420, maxWidth: '92vw' }}>
+        <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--ink)', fontFamily: 'var(--font-display)' }}>เลือก Avatar</div>
+          <button onClick={onClose} className="btn btn-ghost" style={{ padding: '4px 8px', fontSize: 18 }}>×</button>
+        </div>
+
+        {/* tabs */}
+        <div className="row" style={{ gap: 8 }}>
+          {[['emoji','🎭 Avatar สำเร็จรูป'],['photo','📷 อัปโหลดรูปภาพ']].map(([k,l]) => (
+            <button key={k} onClick={() => setTab(k)} className="btn"
+              style={{ flex: 1, fontSize: 13, padding: '8px 12px',
+                background: tab === k ? 'linear-gradient(120deg,var(--navy),var(--navy-2))' : 'var(--surface-2)',
+                color: tab === k ? '#fff' : 'var(--ink-soft)' }}>{l}</button>
+          ))}
+        </div>
+
+        {tab === 'emoji' && (
+          <div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(8,1fr)', gap: 8 }}>
+              {AVATAR_PRESETS.map(em => (
+                <button key={em} onClick={() => onSelect({ avatar: em, photo: null })}
+                  style={{ fontSize: 28, padding: 6, borderRadius: 10, border: 'none', cursor: 'pointer', lineHeight: 1,
+                    background: current === em ? 'var(--navy)' : 'var(--surface-2)',
+                    outline: current === em ? '2px solid var(--navy)' : 'none',
+                    transform: current === em ? 'scale(1.15)' : 'scale(1)', transition: 'all .15s' }}>
+                  {em}
+                </button>
+              ))}
+            </div>
+            <button className="btn btn-ghost" style={{ marginTop: 12, width: '100%', fontSize: 13 }}
+              onClick={() => onSelect({ avatar: null, photo: null })}>
+              ใช้ Avatar เริ่มต้น (gradient)
+            </button>
+          </div>
+        )}
+
+        {tab === 'photo' && (
+          <div className="col" style={{ gap: 14, alignItems: 'center' }}>
+            {preview
+              ? <img src={preview} style={{ width: 140, height: 140, borderRadius: 'var(--r-lg)', objectFit: 'cover', border: '2px solid var(--navy)' }} alt="preview" />
+              : <div className="center" style={{ width: 140, height: 140, borderRadius: 'var(--r-lg)', background: 'var(--surface-2)', color: 'var(--muted)', fontSize: 13 }}>ยังไม่มีรูป</div>
+            }
+            <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFile} />
+            <button className="btn" style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)' }}
+              onClick={() => fileRef.current.click()}>
+              <Icon name="download" size={16} /> {preview ? 'เปลี่ยนรูป' : 'เลือกไฟล์รูปภาพ'}
+            </button>
+            {uploading && <div style={{ fontSize: 13, color: 'var(--muted)' }}>กำลังประมวลผล…</div>}
+            {preview && !uploading && (
+              <div className="row" style={{ gap: 10 }}>
+                <button className="btn" style={{ background: 'linear-gradient(120deg,var(--navy),var(--navy-2))', color: '#fff' }}
+                  onClick={() => onSelect({ photo: preview, avatar: null })}>
+                  <Icon name="check" size={15} /> ใช้รูปนี้
+                </button>
+                <button className="btn btn-ghost" onClick={() => { setPreview(null); }}>ล้าง</button>
+              </div>
+            )}
+            <div style={{ fontSize: 11.5, color: 'var(--muted)', textAlign: 'center' }}>รูปจะถูกย่อขนาดเป็น 240×240 px โดยอัตโนมัติ</div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function EditStudentModal({ student, onClose }) {
   const [form, setForm] = React.useState({
     code: student.code || '',
@@ -9,9 +116,14 @@ function EditStudentModal({ student, onClose }) {
     gender: student.gender || 'm',
     h: String(student.health?.h || 130),
     w: String(student.health?.w || 28),
+    avatar: student.avatar || null,
+    photo: student.photo || null,
   });
+  const [showAvatarPicker, setShowAvatarPicker] = React.useState(false);
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
   const inp = { style: { width: '100%', padding: '9px 12px', borderRadius: 'var(--r-md)', border: '1.5px solid var(--surface-2)', background: 'var(--surface-1)', color: 'var(--ink)', fontSize: 14, outline: 'none', boxSizing: 'border-box' } };
+
+  const previewStudent = { ...student, ...form, game: { ...student.game } };
 
   function submit(e) {
     e.preventDefault();
@@ -20,6 +132,7 @@ function EditStudentModal({ student, onClose }) {
     const nutrition = bmi < 14 ? 'ผอม' : bmi > 18.5 ? 'ท้วม' : 'สมส่วน';
     window.GC.updateStudent(student.id, {
       code: form.code, name: form.name, nick: form.nick, gender: form.gender,
+      avatar: form.avatar, photo: form.photo,
       health: { ...student.health, h, w, bmi, nutrition },
     });
     onClose();
@@ -36,6 +149,23 @@ function EditStudentModal({ student, onClose }) {
           <button onClick={onClose} className="btn btn-ghost" style={{ padding: '4px 8px', fontSize: 18, lineHeight: 1 }}>×</button>
         </div>
         <form onSubmit={submit} className="col" style={{ gap: 12 }}>
+          {/* avatar preview + picker */}
+          <div className="row" style={{ gap: 14, alignItems: 'center', padding: '4px 0' }}>
+            <HeroAvatar student={previewStudent} size={72} />
+            <div className="col" style={{ gap: 6 }}>
+              <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--muted)' }}>Avatar / รูปภาพ</div>
+              <button type="button" onClick={() => setShowAvatarPicker(true)} className="btn"
+                style={{ background: 'linear-gradient(120deg,var(--navy),var(--navy-2))', color: '#fff', fontSize: 13, padding: '7px 14px' }}>
+                <Icon name="brush" size={14} /> เปลี่ยน Avatar
+              </button>
+              {(form.avatar || form.photo) && (
+                <button type="button" onClick={() => { set('avatar', null); set('photo', null); }} className="btn btn-ghost" style={{ fontSize: 12 }}>
+                  ล้าง (ใช้ค่าเริ่มต้น)
+                </button>
+              )}
+            </div>
+          </div>
+          <div style={{ height: 1, background: 'var(--line)' }} />
           <div className="col" style={{ gap: 5 }}>
             <label style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--muted)' }}>รหัสนักเรียน</label>
             <input {...inp} placeholder="เช่น 46201" value={form.code} onChange={e => set('code', e.target.value)} />
@@ -73,6 +203,14 @@ function EditStudentModal({ student, onClose }) {
           </div>
         </form>
       </div>
+      {showAvatarPicker && (
+        <AvatarPickerModal
+          current={form.avatar}
+          currentPhoto={form.photo}
+          onSelect={({ avatar, photo }) => { set('avatar', avatar); set('photo', photo); setShowAvatarPicker(false); }}
+          onClose={() => setShowAvatarPicker(false)}
+        />
+      )}
     </div>
   );
 }
@@ -191,9 +329,11 @@ function Health() {
 }
 
 function AddStudentModal({ onClose }) {
-  const [form, setForm] = React.useState({ code: '', name: '', nick: '', gender: 'm', h: '130', w: '28' });
+  const [form, setForm] = React.useState({ code: '', name: '', nick: '', gender: 'm', h: '130', w: '28', avatar: null, photo: null });
   const [err, setErr] = React.useState('');
+  const [showAvatarPicker, setShowAvatarPicker] = React.useState(false);
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const previewStudent = { nick: form.nick || '?', game: { hue: 200 }, avatar: form.avatar, photo: form.photo };
 
   function submit(e) {
     e.preventDefault();
@@ -216,6 +356,17 @@ function AddStudentModal({ onClose }) {
         </div>
 
         <form onSubmit={submit} className="col" style={{ gap: 12 }}>
+          {/* avatar */}
+          <div className="row" style={{ gap: 12, alignItems: 'center' }}>
+            <HeroAvatar student={previewStudent} size={60} />
+            <button type="button" onClick={() => setShowAvatarPicker(true)} className="btn"
+              style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)', fontSize: 13 }}>
+              <Icon name="brush" size={14} /> เลือก Avatar / รูปภาพ
+            </button>
+            {(form.avatar || form.photo) && (
+              <button type="button" onClick={() => { set('avatar',null); set('photo',null); }} className="btn btn-ghost" style={{ fontSize: 12 }}>ล้าง</button>
+            )}
+          </div>
           <div className="col" style={{ gap: 5 }}>
             <label style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--muted)' }}>รหัสนักเรียน</label>
             <input {...inp} placeholder="เช่น 46217" value={form.code} onChange={e => set('code', e.target.value)} />
@@ -254,6 +405,14 @@ function AddStudentModal({ onClose }) {
           </div>
         </form>
       </div>
+      {showAvatarPicker && (
+        <AvatarPickerModal
+          current={form.avatar}
+          currentPhoto={form.photo}
+          onSelect={({ avatar, photo }) => { set('avatar', avatar); set('photo', photo); setShowAvatarPicker(false); }}
+          onClose={() => setShowAvatarPicker(false)}
+        />
+      )}
     </div>
   );
 }
