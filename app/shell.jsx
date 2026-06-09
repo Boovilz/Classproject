@@ -1,6 +1,15 @@
 /* ============================================================
    APP SHELL — router + world switching + cinematic transitions
    ============================================================ */
+const { StudentPortal } = window;
+
+// detect student portal mode before mounting App
+if (new URLSearchParams(window.location.search).has('portal')) {
+  ReactDOM.createRoot(document.getElementById('root')).render(
+    React.createElement(StudentPortal)
+  );
+} else {
+
 const {
   Login, Portal, TeacherShell, TeacherDashboard, Attendance, Health, StudentsGrid, BarcodeScore,
   GameShell, GameHome, StudentProfile, TerritoryMap, RewardShop, GamesHub, ClassroomTools, StatusBoard,
@@ -101,3 +110,5 @@ function App() {
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+
+} // end portal else

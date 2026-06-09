@@ -40,18 +40,36 @@ function Panel({ children, hue, pad = 18, style }) {
    BOSS BATTLE — cooperative classroom HP event
    ============================================================ */
 function BossRaid({ openStudent }) {
-  const { BOSS, CLASS } = window.GC;
+  const { BOSS, BOSS_SKILLS } = window.GC;
   const STUDENTS = useStudents();
   const [hp, setHp] = React.useState(BOSS.hp);
   const [feed, setFeed] = React.useState(BOSS.feed);
   const [hit, setHit] = React.useState(0);
+  const [activeSkill, setActiveSkill] = React.useState(() => window.GC.getActiveBossSkill());
+  const [skillToast, setSkillToast] = React.useState(null);
   const pct = Math.round((hp / BOSS.hpMax) * 100);
 
+  React.useEffect(() => {
+    const h = () => setActiveSkill(window.GC.getActiveBossSkill());
+    window.addEventListener('gc:students-changed', h);
+    return () => window.removeEventListener('gc:students-changed', h);
+  }, []);
+
+  function triggerSkill(skill) {
+    window.GC.triggerBossSkill(skill.key);
+    if (skill.key === 'heal') setHp(h => Math.min(BOSS.hpMax, Math.round(h + BOSS.hpMax * 0.15)));
+    if (skill.key === 'chaos_storm') setHp(h => Math.max(0, Math.round(h * 0.9)));
+    setSkillToast('⚡ ' + skill.th + ' — ' + skill.desc);
+    setTimeout(() => setSkillToast(null), 3000);
+  }
+
   const strike = (atk) => {
-    setHp(h => Math.max(0, h - atk.dmg));
+    const dmgMulti = activeSkill?.key === 'shield_mode' ? 0.5 : activeSkill?.key === 'rage' ? 2 : 1;
+    const finalDmg = Math.round(atk.dmg * dmgMulti);
+    setHp(h => Math.max(0, h - finalDmg));
     setHit(x => x + 1);
     const idx = Math.floor(Math.random() * STUDENTS.length);
-    setFeed(f => [{ who: idx, dmg: atk.dmg, act: atk.th, t: 'เมื่อสักครู่' }, ...f].slice(0, 6));
+    setFeed(f => [{ who: idx, dmg: finalDmg, act: atk.th, t: 'เมื่อสักครู่' }, ...f].slice(0, 6));
   };
 
   // contributors ranked by real XP; scale dmg proportionally to max student XP
@@ -113,8 +131,9 @@ function BossRaid({ openStudent }) {
                 <div style={{ width: pct + '%', height: '100%', background: 'linear-gradient(90deg, oklch(0.55 0.24 22), oklch(0.72 0.2 42))', boxShadow: '0 0 18px oklch(0.65 0.22 30)', transition: 'width .4s ease' }} />
                 <div className="center tech" style={{ position: 'absolute', inset: 0, fontSize: 12, color: '#fff', textShadow: '0 1px 3px #000' }}>{pct}%</div>
               </div>
-              <div className="row" style={{ justifyContent: 'space-between', marginTop: 8 }}>
+              <div className="row" style={{ justifyContent: 'space-between', marginTop: 8, flexWrap: 'wrap', gap: 6 }}>
                 <span className="tech" style={{ fontSize: 11, color: 'var(--muted)', letterSpacing: '.06em' }}>ทั้งห้องช่วยกันลด HP · {STUDENTS.length} นักรบ</span>
+                {activeSkill && <span className="pill tech" style={{ fontSize: 10.5, background: `oklch(0.4 0.16 ${activeSkill.hue} / .35)`, color: `oklch(0.85 0.14 ${activeSkill.hue})` }}>⚡ {activeSkill.th}</span>}
                 {hp === 0 && <span className="pill tech" style={{ background: 'color-mix(in oklch,var(--st-present) 25%,transparent)', color: 'var(--st-present)', fontSize: 12 }}>ปราบบอสสำเร็จ! 🎉</span>}
               </div>
             </div>
@@ -147,6 +166,37 @@ function BossRaid({ openStudent }) {
                 </div>
               ))}
             </div>
+          </Panel>
+          {/* boss skills */}
+          <Panel hue={305}>
+            <div className="tech" style={{ fontSize: 11, color: 'var(--muted)', letterSpacing: '.16em', marginBottom: 8 }}>// สกิลพิเศษบอส (ครูกด)</div>
+            {activeSkill && (
+              <div className="row" style={{ gap: 8, padding: '7px 10px', borderRadius: 8, marginBottom: 10,
+                background: `oklch(0.4 0.18 ${activeSkill.hue} / .35)`, border: `1px solid oklch(0.6 0.18 ${activeSkill.hue} / .5)` }}>
+                <Icon name={activeSkill.icon} size={15} color={`oklch(0.85 0.18 ${activeSkill.hue})`} />
+                <span style={{ fontSize: 11.5, color: '#fff', fontWeight: 600, flex: 1 }}>{activeSkill.th}</span>
+                <button onClick={() => window.GC.clearBossSkill()} style={{ fontSize: 10, color: 'var(--muted)', background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px' }}>✕</button>
+              </div>
+            )}
+            <div className="col" style={{ gap: 7 }}>
+              {BOSS_SKILLS.map(sk => (
+                <button key={sk.key} onClick={() => triggerSkill(sk)} className="row" style={{ gap: 10, padding: '8px 10px', cursor: 'pointer', textAlign: 'left',
+                  background: activeSkill?.key === sk.key ? `oklch(0.3 0.12 ${sk.hue} / .7)` : 'oklch(0.16 0.04 285 / .6)',
+                  border: `1px solid oklch(0.5 0.1 ${sk.hue} / .35)`, clipPath: W2CLIP }}>
+                  <div className="center" style={{ width: 30, height: 30, borderRadius: 8, flex: 'none', background: `oklch(0.4 0.16 ${sk.hue} / .4)` }}>
+                    <Icon name={sk.icon} size={15} color={`oklch(0.82 0.16 ${sk.hue})`} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 12, color: '#fff', fontWeight: 600 }}>{sk.th}</div>
+                    <div className="tech" style={{ fontSize: 9.5, color: 'var(--muted)' }}>{sk.desc}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+            {skillToast && (
+              <div style={{ marginTop: 8, padding: '7px 10px', borderRadius: 8, background: 'color-mix(in oklch,var(--purple) 20%,transparent)',
+                color: 'var(--purple)', fontSize: 11.5, fontWeight: 600, animation: 'rise .2s ease-out' }}>{skillToast}</div>
+            )}
           </Panel>
         </div>
       </div>
@@ -199,8 +249,14 @@ function PetSanctuary() {
   const [xp, setXp] = React.useState(PET.xp);
   const [fed, setFed] = React.useState(PET.fedToday);
   const [bounce, setBounce] = React.useState(0);
-  const [mood, setMood] = React.useState(PET.mood);
-  const feed = (amt) => { setBounce(b => b + 1); setFed(f => Math.min(STUDENTS.length, f + 1)); setXp(x => Math.min(PET.xpMax, x + amt)); setMood('ร่าเริงมาก'); };
+  const [moodObj, setMoodObj] = React.useState(() => window.GC.getPetMood());
+  React.useEffect(() => {
+    const h = () => setMoodObj(window.GC.getPetMood());
+    window.addEventListener('gc:students-changed', h);
+    window.addEventListener('gc:score-added', h);
+    return () => { window.removeEventListener('gc:students-changed', h); window.removeEventListener('gc:score-added', h); };
+  }, []);
+  const feed = (amt) => { setBounce(b => b + 1); setFed(f => Math.min(STUDENTS.length, f + 1)); setXp(x => Math.min(PET.xpMax, x + amt)); };
 
   const stageDefs = [
     { th: 'ไข่มังกร', lv: [1, 3], icon: 'drop' },
@@ -252,10 +308,13 @@ function PetSanctuary() {
               </div>
               <div className="center col" style={{ gap: 5 }}>
                 <div className="display" style={{ fontSize: 22, color: '#fff' }}>{PET.name}</div>
+                <div style={{ fontSize: 12, color: `oklch(0.82 0.14 ${moodObj.hue})`, textAlign: 'center' }}>{moodObj.msg}</div>
                 <div className="row" style={{ gap: 8 }}>
                   <span className="pill tech" style={{ background: 'color-mix(in oklch,var(--gold) 18%,transparent)', color: 'var(--gold)', fontSize: 11 }}>Lv.{PET.level}</span>
                   <span className="pill tech" style={{ background: 'color-mix(in oklch,var(--cyan) 16%,transparent)', color: 'var(--cyan)', fontSize: 11 }}>{PET.species} · {PET.stage}</span>
-                  <span className="pill tech" style={{ background: 'rgba(255,255,255,.08)', color: 'var(--ink-soft)', fontSize: 11 }}>อารมณ์: {mood}</span>
+                  <span className="pill tech" style={{ background: `color-mix(in oklch,oklch(0.7 0.18 ${moodObj.hue}) 20%,rgba(0,0,0,.3))`, color: `oklch(0.88 0.14 ${moodObj.hue})`, fontSize: 11 }}>
+                    {moodObj.emoji} {moodObj.th}
+                  </span>
                 </div>
               </div>
               <div style={{ width: '100%', maxWidth: 360 }}>

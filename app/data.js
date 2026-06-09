@@ -221,6 +221,59 @@
     { key: 'coder',   th: 'ฮีโร่โค้ดดิ้ง',     icon: 'tool',   hue: 230, holder: topBy(s => s.game.territories.career) },
   ];
 
+  // ---- pet mood (computed from real class data) ----
+  const PET_MOODS = [
+    { key: 'excited', th: 'ร่าเริงมาก', emoji: '🤩', hue: 88,  msg: 'พลังงานเต็มร้อย! ห้องเรียนยอดเยี่ยม' },
+    { key: 'happy',   th: 'มีความสุข',  emoji: '😊', hue: 150, msg: 'อารมณ์ดี ทุกคนมาครบ' },
+    { key: 'normal',  th: 'ปกติ',       emoji: '🙂', hue: 200, msg: 'สบายดี ไม่มีอะไรพิเศษ' },
+    { key: 'hungry',  th: 'หิวโหย',    emoji: '😋', hue: 30,  msg: 'ยังไม่ได้รับ XP วันนี้เลย!' },
+    { key: 'sleepy',  th: 'ง่วงนอน',   emoji: '😴', hue: 265, msg: 'มีคนขาดเรียนเยอะ...' },
+    { key: 'sad',     th: 'เศร้า',      emoji: '😢', hue: 220, msg: 'ห้องเรียนเงียบเหงาจัง' },
+  ];
+  function getPetMood() {
+    const ss = getStudents();
+    const today = dateKey(new Date());
+    const log = getScoreLog();
+    const todayXP = log.filter(function(e) { return e.type === 'xp' && e.at && e.at.slice(0,10) === today; })
+      .reduce(function(a,e) { return a + (Number(e.amount)||0); }, 0);
+    const presentCount = ss.filter(function(s) { return s.status === 'present' || s.status === 'late' || s.status === 'activity'; }).length;
+    const rate = ss.length ? presentCount / ss.length : 0;
+    if (rate >= 0.9 && todayXP >= 100) return PET_MOODS[0];
+    if (rate >= 0.7 && todayXP >= 20)  return PET_MOODS[1];
+    if (rate < 0.5)                    return PET_MOODS[4];
+    if (todayXP === 0)                 return PET_MOODS[3];
+    if (rate < 0.6)                    return PET_MOODS[5];
+    return PET_MOODS[2];
+  }
+
+  // ---- boss skills ----
+  const BOSS_SKILLS = [
+    { key: 'chaos_storm', th: 'พายุแห่งความโกลาหล', en: 'Chaos Storm',  desc: 'ลด HP ทีม 10% ทันที',      icon: 'spark',  hue: 305, duration: 0 },
+    { key: 'shield_mode', th: 'โหมดโล่เหล็ก',       en: 'Shield Mode',  desc: 'ดาเมจลดครึ่งหนึ่ง 1 วัน',  icon: 'shield', hue: 200, duration: 1 },
+    { key: 'rage',        th: 'ความพิโรธราชันย์',    en: 'Rage Mode',    desc: 'บอสโจมตีแรงขึ้น ×2',        icon: 'fire',   hue: 22,  duration: 2 },
+    { key: 'heal',        th: 'ดูดกลืนชีวิต',        en: 'Life Drain',   desc: 'บอสฟื้น HP 15%',            icon: 'heart',  hue: 350, duration: 0 },
+  ];
+  const LS_BOSS_SKILL = 'gcos.boss.skill';
+  function getActiveBossSkill() {
+    try {
+      var d = JSON.parse(localStorage.getItem(LS_BOSS_SKILL));
+      if (!d) return null;
+      if (d.expiresAt && new Date() > new Date(d.expiresAt)) { localStorage.removeItem(LS_BOSS_SKILL); return null; }
+      return d;
+    } catch(e) { return null; }
+  }
+  function triggerBossSkill(skillKey) {
+    var skill = BOSS_SKILLS.find(function(s){ return s.key === skillKey; });
+    if (!skill) return;
+    var expiresAt = skill.duration > 0 ? new Date(Date.now() + skill.duration * 86400000).toISOString() : null;
+    localStorage.setItem(LS_BOSS_SKILL, JSON.stringify(Object.assign({}, skill, { triggeredAt: new Date().toISOString(), expiresAt: expiresAt })));
+    window.dispatchEvent(new CustomEvent('gc:students-changed'));
+  }
+  function clearBossSkill() {
+    localStorage.removeItem(LS_BOSS_SKILL);
+    window.dispatchEvent(new CustomEvent('gc:students-changed'));
+  }
+
   // ---- boss battle (cooperative classroom event) ----
   const BOSS = {
     name: 'ราชันย์สมการ', en: 'The Equation Tyrant', subject: 'คณิตศาสตร์',
@@ -679,8 +732,9 @@
     STUDENTS, CLASS, WEEK_TREND,
     CLASS_XP, CLASS_LEVEL, SEASON, PET, QUESTS, ACHIEVEMENTS, KINGDOM_ZONES,
     BOSS, SEASONS, SEASON_TRACK,
-    GUILDS, DAILY_EVENTS, CLASS_ACHIEVEMENTS,
+    GUILDS, DAILY_EVENTS, CLASS_ACHIEVEMENTS, BOSS_SKILLS, PET_MOODS,
     getDailyEvent, getGuildStats, getClassAchievements, claimClassAchievement,
+    getPetMood, getActiveBossSkill, triggerBossSkill, clearBossSkill,
     TITLES, getTitleForStudent, getStudentStreak, getAchievements,
     getStudents, addStudent, deleteStudent, updateStudent,
     getClass, updateClass,
