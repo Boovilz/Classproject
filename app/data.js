@@ -265,6 +265,24 @@
     { key: 'guild',     th: 'หอสมาคม',       sub: 'การ์ดฮีโร่',        route: 'guild',     icon: 'users',  hue: 270, pos: [67, 82] },
   ];
 
+  // ---- class info CRUD with localStorage persistence ----
+  const LS_CLASS = 'gcos.class.info';
+  const CLASS_BASE = { name: CLASS.name, room: CLASS.room, teacher: CLASS.teacher, year: CLASS.year };
+
+  function getClass() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(LS_CLASS));
+      return saved ? { ...CLASS, ...saved } : CLASS;
+    } catch { return CLASS; }
+  }
+
+  function updateClass(data) {
+    const cur = getClass();
+    const next = { ...cur, ...data };
+    localStorage.setItem(LS_CLASS, JSON.stringify({ name: next.name, room: next.room, teacher: next.teacher, year: next.year }));
+    window.dispatchEvent(new CustomEvent('gc:class-changed'));
+  }
+
   // ---- student CRUD with localStorage persistence ----
   const LS_DEL = 'gcos.students.deleted';
   const LS_ADD = 'gcos.students.added';
@@ -327,5 +345,6 @@
     CLASS_XP, CLASS_LEVEL, SEASON, PET, QUESTS, ACHIEVEMENTS, KINGDOM_ZONES,
     BOSS, SEASONS, SEASON_TRACK,
     getStudents, addStudent, deleteStudent,
+    getClass, updateClass,
   };
 })();

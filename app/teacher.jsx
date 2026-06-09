@@ -1,6 +1,55 @@
 /* ============================================================
    TEACHER WORLD — shell (sidebar) + dashboard
    ============================================================ */
+function EditClassModal({ cls, onClose }) {
+  const [form, setForm] = React.useState({ name: cls.name, room: cls.room, teacher: cls.teacher, year: cls.year });
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const inp = { style: { width: '100%', padding: '9px 12px', borderRadius: 'var(--r-md)', border: '1.5px solid var(--surface-2)', background: 'var(--surface-1)', color: 'var(--ink)', fontSize: 14, outline: 'none', boxSizing: 'border-box' } };
+
+  function submit(e) {
+    e.preventDefault();
+    window.GC.updateClass(form);
+    onClose();
+  }
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,.55)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="glass col" style={{ borderRadius: 'var(--r-xl)', padding: 28, gap: 18, width: 380, maxWidth: '90vw' }}>
+        <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--ink)', fontFamily: 'var(--font-display)' }}>
+            <Icon name="tool" size={17} /> ข้อมูลห้องเรียน
+          </div>
+          <button onClick={onClose} className="btn btn-ghost" style={{ padding: '4px 8px', fontSize: 18, lineHeight: 1 }}>×</button>
+        </div>
+        <form onSubmit={submit} className="col" style={{ gap: 13 }}>
+          <div className="col" style={{ gap: 5 }}>
+            <label style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--muted)' }}>ชื่อห้องเรียน</label>
+            <input {...inp} placeholder="เช่น ป.4/2" value={form.name} onChange={e => set('name', e.target.value)} />
+          </div>
+          <div className="col" style={{ gap: 5 }}>
+            <label style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--muted)' }}>ห้อง / อาคาร</label>
+            <input {...inp} placeholder="เช่น อาคาร 2 ห้อง 204" value={form.room} onChange={e => set('room', e.target.value)} />
+          </div>
+          <div className="col" style={{ gap: 5 }}>
+            <label style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--muted)' }}>ชื่อครูประจำชั้น</label>
+            <input {...inp} placeholder="เช่น ครูมานี รักเรียน" value={form.teacher} onChange={e => set('teacher', e.target.value)} />
+          </div>
+          <div className="col" style={{ gap: 5 }}>
+            <label style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--muted)' }}>ปีการศึกษา</label>
+            <input {...inp} placeholder="เช่น ปีการศึกษา 2568" value={form.year} onChange={e => set('year', e.target.value)} />
+          </div>
+          <div className="row" style={{ gap: 10, justifyContent: 'flex-end', marginTop: 4 }}>
+            <button type="button" onClick={onClose} className="btn btn-ghost">ยกเลิก</button>
+            <button type="submit" className="btn" style={{ background: 'linear-gradient(120deg,var(--navy),var(--navy-2))', color: '#fff' }}>
+              <Icon name="check" size={15} /> บันทึก
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
 const TEACHER_NAV = [
   { key: 'dashboard',  th: 'แดชบอร์ด', icon: 'home' },
   { key: 'attendance', th: 'เช็กชื่อ',  icon: 'calendar' },
@@ -9,7 +58,16 @@ const TEACHER_NAV = [
 ];
 
 function TeacherShell({ route, setRoute, onPortal, onLogout, children }) {
-  const { CLASS } = window.GC;
+  const [cls, setCls] = React.useState(() => window.GC.getClass());
+  const [showEdit, setShowEdit] = React.useState(false);
+  const CLASS = cls;
+
+  React.useEffect(() => {
+    const refresh = () => setCls(window.GC.getClass());
+    window.addEventListener('gc:class-changed', refresh);
+    return () => window.removeEventListener('gc:class-changed', refresh);
+  }, []);
+
   const today = new Date(2026, 4, 29);
   const dstr = today.toLocaleDateString('th-TH', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
   return (
@@ -27,14 +85,20 @@ function TeacherShell({ route, setRoute, onPortal, onLogout, children }) {
           </div>
         </div>
 
-        <div className="glass-2" style={{ borderRadius: 'var(--r-md)', padding: '12px 14px', marginBottom: 8 }}>
+        <div className="glass-2" style={{ borderRadius: 'var(--r-md)', padding: '12px 14px', marginBottom: 8, position: 'relative' }}>
           <div className="row" style={{ justifyContent: 'space-between' }}>
             <div className="display" style={{ fontSize: 22, color: 'var(--navy)' }}>{CLASS.name}</div>
-            <span className="pill" style={{ background: 'color-mix(in oklch, var(--st-present) 16%, transparent)', color: 'var(--st-present)' }}>
-              <span className="dot" style={{ background: 'var(--st-present)' }} /> สด
-            </span>
+            <div className="row" style={{ gap: 6 }}>
+              <span className="pill" style={{ background: 'color-mix(in oklch, var(--st-present) 16%, transparent)', color: 'var(--st-present)' }}>
+                <span className="dot" style={{ background: 'var(--st-present)' }} /> สด
+              </span>
+              <button onClick={() => setShowEdit(true)} title="แก้ไขข้อมูลห้องเรียน"
+                style={{ width: 26, height: 26, borderRadius: 7, border: 'none', background: 'var(--surface-2)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)' }}>
+                <Icon name="tool" size={14} />
+              </button>
+            </div>
           </div>
-          <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>{CLASS.total} คน · {CLASS.room}</div>
+          <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>{window.GC.getStudents().length} คน · {CLASS.room}</div>
         </div>
 
         <nav className="col" style={{ gap: 4 }}>
@@ -59,16 +123,19 @@ function TeacherShell({ route, setRoute, onPortal, onLogout, children }) {
         </button>
 
         <div className="row glass-2" style={{ gap: 10, padding: 10, borderRadius: 'var(--r-md)', marginTop: 4 }}>
-          <div className="center" style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--navy)', color: '#fff', fontWeight: 700, fontFamily: 'var(--font-display)' }}>ค</div>
+          <div className="center" style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--navy)', color: '#fff', fontWeight: 700, fontFamily: 'var(--font-display)' }}>
+            {CLASS.teacher.slice(-2, -1) || 'ค'}
+          </div>
           <div style={{ minWidth: 0, flex: 1 }}>
             <div className="nowrap" style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink)' }}>{CLASS.teacher}</div>
-            <div style={{ fontSize: 11, color: 'var(--muted)' }}>ครูประจำชั้น</div>
+            <div style={{ fontSize: 11, color: 'var(--muted)' }}>{CLASS.year}</div>
           </div>
           <button onClick={onLogout} className="center" style={{ width: 30, height: 30, borderRadius: 8, background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--muted)' }}>
             <Icon name="logout" size={17} />
           </button>
         </div>
       </aside>
+      {showEdit && <EditClassModal cls={cls} onClose={() => setShowEdit(false)} />}
 
       {/* main */}
       <div className="col" style={{ flex: 1, minWidth: 0, position: 'relative', zIndex: 1 }}>
@@ -96,7 +163,14 @@ function TeacherShell({ route, setRoute, onPortal, onLogout, children }) {
 }
 
 function TeacherDashboard({ openStudent }) {
-  const { CLASS, STUDENTS, STATUSES, WEEK_TREND } = window.GC;
+  const [cls, setCls] = React.useState(() => window.GC.getClass());
+  React.useEffect(() => {
+    const r = () => setCls(window.GC.getClass());
+    window.addEventListener('gc:class-changed', r);
+    return () => window.removeEventListener('gc:class-changed', r);
+  }, []);
+  const { STUDENTS, STATUSES, WEEK_TREND } = window.GC;
+  const CLASS = { ...cls, total: window.GC.getStudents().length, summary: window.GC.CLASS.summary, welfare: window.GC.CLASS.welfare };
   const s = CLASS.summary;
   const presentPct = Math.round((s.present / CLASS.total) * 100);
   const alerts = STUDENTS.filter(st => st.health.nutrition !== 'สมส่วน' || st.status === 'sick' || st.status === 'absent');
@@ -111,7 +185,7 @@ function TeacherDashboard({ openStudent }) {
         <div style={{ position: 'absolute', right: -30, top: -30, width: 180, height: 180, borderRadius: '50%', background: 'var(--halo)', filter: 'blur(20px)' }} />
         <div className="row" style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, position: 'relative' }}>
           <div>
-            <h2 style={{ fontSize: 26, color: 'var(--ink)' }}>สวัสดีตอนเช้า คุณครูมานี 👋</h2>
+            <h2 style={{ fontSize: 26, color: 'var(--ink)' }}>สวัสดีตอนเช้า {CLASS.teacher} 👋</h2>
             <p style={{ color: 'var(--muted)', marginTop: 4, fontSize: 14 }}>วันนี้มีนักเรียนมาเรียน {s.present} จาก {CLASS.total} คน · มาเรียน {presentPct}%</p>
           </div>
           <div className="row" style={{ gap: 10 }}>
