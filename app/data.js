@@ -118,6 +118,7 @@
     return {
       id: 'S' + (i + 1),
       no: i + 1,
+      code: String(46201 + i),
       name: n[0], nick: n[1], gender: n[2],
       status: n[3], live: liveKeys[i],
       welfare: { milk: seeded(i, 0, 10) > 2, brush: seeded(i + 1, 0, 10) > 3, lunch: seeded(i + 2, 0, 10) > 1 },
@@ -290,6 +291,26 @@
   function loadDeleted() { try { return new Set(JSON.parse(localStorage.getItem(LS_DEL)) || []); } catch { return new Set(); } }
   function loadAdded()   { try { return JSON.parse(localStorage.getItem(LS_ADD)) || []; } catch { return []; } }
 
+  // ---- score log ----
+  const LS_SCORE = 'gcos.score.log';
+  function getScoreLog() { try { return JSON.parse(localStorage.getItem(LS_SCORE)) || []; } catch { return []; } }
+  function addScoreLog(entry) {
+    const log = getScoreLog();
+    log.unshift({ ...entry, at: Date.now() });
+    localStorage.setItem(LS_SCORE, JSON.stringify(log.slice(0, 200)));
+    window.dispatchEvent(new CustomEvent('gc:score-added', { detail: entry }));
+  }
+
+  // ---- student overrides (for updateStudent) ----
+  const LS_OVERRIDES = 'gcos.students.overrides';
+  function getOverrides() { try { return JSON.parse(localStorage.getItem(LS_OVERRIDES)) || {}; } catch { return {}; } }
+  function updateStudent(id, data) {
+    const ov = getOverrides();
+    ov[id] = { ...(ov[id] || {}), ...data };
+    localStorage.setItem(LS_OVERRIDES, JSON.stringify(ov));
+    window.dispatchEvent(new CustomEvent('gc:students-changed'));
+  }
+
   function makeStudent(data, idx) {
     const h = +(data.h || 130); const w = +(data.w || 28);
     const bmi = +(w / Math.pow(h / 100, 2)).toFixed(1);
@@ -299,6 +320,7 @@
     return {
       id: data.id || ('C' + Date.now() + idx),
       no: data.no,
+      code: data.code || String(50000 + Date.now() % 9999),
       name: data.name, nick: data.nick, gender: data.gender || 'm',
       status: 'present', live: 'present',
       welfare: { milk: false, brush: false, lunch: false },
@@ -314,8 +336,15 @@
   function getStudents() {
     const deleted = loadDeleted();
     const added = loadAdded();
-    const base = STUDENTS.filter(s => !deleted.has(s.id));
-    const custom = added.map((d, i) => makeStudent(d, i));
+    const overrides = getOverrides();
+    const base = STUDENTS.filter(s => !deleted.has(s.id)).map(s =>
+      overrides[s.id] ? { ...s, ...overrides[s.id],
+        health: { ...s.health, ...(overrides[s.id].health || {}) } } : s
+    );
+    const custom = added.map((d, i) => {
+      const s = makeStudent(d, i);
+      return overrides[s.id] ? { ...s, ...overrides[s.id] } : s;
+    });
     return [...base, ...custom];
   }
 
@@ -344,7 +373,8 @@
     STUDENTS, CLASS, WEEK_TREND,
     CLASS_XP, CLASS_LEVEL, SEASON, PET, QUESTS, ACHIEVEMENTS, KINGDOM_ZONES,
     BOSS, SEASONS, SEASON_TRACK,
-    getStudents, addStudent, deleteStudent,
+    getStudents, addStudent, deleteStudent, updateStudent,
     getClass, updateClass,
+    getScoreLog, addScoreLog,
   };
 })();

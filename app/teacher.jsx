@@ -51,10 +51,11 @@ function EditClassModal({ cls, onClose }) {
   );
 }
 const TEACHER_NAV = [
-  { key: 'dashboard',  th: 'แดชบอร์ด', icon: 'home' },
-  { key: 'attendance', th: 'เช็กชื่อ',  icon: 'calendar' },
-  { key: 'health',     th: 'สุขภาพ',    icon: 'heart' },
-  { key: 'students',   th: 'นักเรียน',  icon: 'users' },
+  { key: 'dashboard',  th: 'แดชบอร์ด',    icon: 'home' },
+  { key: 'attendance', th: 'เช็กชื่อ',     icon: 'calendar' },
+  { key: 'health',     th: 'สุขภาพ',       icon: 'heart' },
+  { key: 'students',   th: 'นักเรียน',     icon: 'users' },
+  { key: 'barcode',    th: 'บาร์โค้ดคะแนน', icon: 'report' },
 ];
 
 function TeacherShell({ route, setRoute, onPortal, onLogout, children }) {
@@ -278,4 +279,205 @@ function TeacherDashboard({ openStudent }) {
   );
 }
 
-Object.assign(window, { TeacherShell, TeacherDashboard, TEACHER_NAV });
+function BarcodeScore() {
+  const [input, setInput] = React.useState('');
+  const [found, setFound] = React.useState(null);
+  const [notFound, setNotFound] = React.useState(false);
+  const [award, setAward] = React.useState({ type: 'xp', amount: '10', note: '' });
+  const [log, setLog] = React.useState(() => window.GC.getScoreLog());
+  const [flash, setFlash] = React.useState(null);
+  const inputRef = React.useRef();
+
+  React.useEffect(() => {
+    inputRef.current?.focus();
+    const refresh = () => setLog(window.GC.getScoreLog());
+    window.addEventListener('gc:score-added', refresh);
+    return () => window.removeEventListener('gc:score-added', refresh);
+  }, []);
+
+  function lookup(val) {
+    const code = val.trim();
+    if (!code) return;
+    const students = window.GC.getStudents();
+    const st = students.find(s => s.code === code || s.id === code);
+    if (st) { setFound(st); setNotFound(false); }
+    else { setFound(null); setNotFound(true); setTimeout(() => setNotFound(false), 2000); }
+    setInput('');
+  }
+
+  function handleKey(e) {
+    if (e.key === 'Enter') lookup(input);
+  }
+
+  function giveScore() {
+    if (!found) return;
+    const amt = +award.amount || 0;
+    if (!amt) return;
+    window.GC.addScoreLog({
+      studentId: found.id,
+      studentCode: found.code,
+      name: found.name,
+      nick: found.nick,
+      type: award.type,
+      amount: amt,
+      note: award.note,
+    });
+    setFlash({ nick: found.nick, type: award.type, amount: amt });
+    setTimeout(() => setFlash(null), 2500);
+    setFound(null);
+    setAward(a => ({ ...a, note: '' }));
+    inputRef.current?.focus();
+  }
+
+  const TYPE_OPTS = [
+    { key: 'xp',    label: 'XP',    color: 'var(--navy)',      icon: 'bolt' },
+    { key: 'coin',  label: 'Coin',  color: 'var(--rk-gold)',   icon: 'star' },
+    { key: 'star',  label: 'Star',  color: 'oklch(0.78 0.2 55)', icon: 'spark' },
+  ];
+
+  const inp = { style: { padding: '9px 12px', borderRadius: 'var(--r-md)', border: '1.5px solid var(--surface-2)', background: 'var(--surface-1)', color: 'var(--ink)', fontSize: 14, outline: 'none' } };
+
+  return (
+    <div className="col" style={{ gap: 20, maxWidth: 820 }}>
+      <div style={{ fontSize: 13.5, color: 'var(--muted)' }}>
+        สแกนบาร์โค้ดหรือพิมพ์รหัสนักเรียน แล้วกด Enter เพื่อค้นหา
+      </div>
+
+      {/* scan input */}
+      <div className="glass col" style={{ borderRadius: 'var(--r-xl)', padding: 24, gap: 16 }}>
+        <div className="row" style={{ gap: 12, alignItems: 'center' }}>
+          <div className="center" style={{ width: 48, height: 48, borderRadius: 14, background: 'linear-gradient(135deg,var(--navy),var(--navy-2))' }}>
+            <Icon name="report" size={26} color="#fff" />
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--ink)' }}>สแกนรหัสนักเรียน</div>
+            <div style={{ fontSize: 12.5, color: 'var(--muted)' }}>รองรับเครื่องสแกนบาร์โค้ด USB และการพิมพ์ด้วยมือ</div>
+          </div>
+        </div>
+        <div className="row" style={{ gap: 10 }}>
+          <input ref={inputRef} {...inp} style={{ ...inp.style, flex: 1, fontSize: 20, padding: '12px 16px',
+            outline: notFound ? '2px solid var(--st-absent)' : found ? '2px solid var(--st-present)' : 'none' }}
+            placeholder="รหัสนักเรียน…"
+            value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKey}
+            autoComplete="off" />
+          <button className="btn" style={{ padding: '12px 22px', background: 'linear-gradient(120deg,var(--navy),var(--navy-2))', color: '#fff', fontSize: 15 }}
+            onClick={() => lookup(input)}>
+            <Icon name="search" size={18} /> ค้นหา
+          </button>
+        </div>
+        {notFound && <div style={{ color: 'var(--st-absent)', fontSize: 13.5, fontWeight: 600 }}>⚠️ ไม่พบรหัสนักเรียนนี้</div>}
+      </div>
+
+      {/* found student + award */}
+      {found && (
+        <div className="glass col" style={{ borderRadius: 'var(--r-xl)', padding: 24, gap: 18, outline: '2px solid var(--st-present)' }}>
+          <div className="row" style={{ gap: 14, alignItems: 'center' }}>
+            <HeroAvatar student={found} size={64} />
+            <div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--ink)', fontFamily: 'var(--font-display)' }}>{found.nick}</div>
+              <div style={{ fontSize: 13, color: 'var(--muted)' }}>{found.name}</div>
+              <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>รหัส #{found.code} · Lv.{found.game.level}</div>
+            </div>
+            <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
+              <div className="row" style={{ gap: 14, justifyContent: 'flex-end' }}>
+                <div className="col" style={{ alignItems: 'center', gap: 2 }}>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--navy)' }}>{found.game.xp}</div>
+                  <div style={{ fontSize: 11, color: 'var(--muted)' }}>XP</div>
+                </div>
+                <div className="col" style={{ alignItems: 'center', gap: 2 }}>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--rk-gold)' }}>{found.game.coins}</div>
+                  <div style={{ fontSize: 11, color: 'var(--muted)' }}>Coin</div>
+                </div>
+                <div className="col" style={{ alignItems: 'center', gap: 2 }}>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: 'oklch(0.78 0.2 55)' }}>{found.game.stars}</div>
+                  <div style={{ fontSize: 11, color: 'var(--muted)' }}>Star</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ height: 1, background: 'var(--line)' }} />
+
+          <div className="col" style={{ gap: 12 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--ink)' }}>มอบรางวัล</div>
+            <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
+              {TYPE_OPTS.map(t => (
+                <button key={t.key} onClick={() => setAward(a => ({ ...a, type: t.key }))} className="btn"
+                  style={{ padding: '8px 18px', gap: 6, background: award.type === t.key ? t.color : 'var(--surface-2)',
+                    color: award.type === t.key ? '#fff' : 'var(--ink-soft)', boxShadow: 'none', transition: 'all .15s' }}>
+                  <Icon name={t.icon} size={15} /> {t.label}
+                </button>
+              ))}
+            </div>
+            <div className="row" style={{ gap: 10, flexWrap: 'wrap' }}>
+              <div className="col" style={{ gap: 5 }}>
+                <label style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--muted)' }}>จำนวน</label>
+                <input {...inp} type="number" min="1" max="9999" style={{ ...inp.style, width: 120 }}
+                  value={award.amount} onChange={e => setAward(a => ({ ...a, amount: e.target.value }))} />
+              </div>
+              <div className="col" style={{ gap: 5, flex: 1, minWidth: 180 }}>
+                <label style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--muted)' }}>หมายเหตุ (ไม่บังคับ)</label>
+                <input {...inp} style={{ ...inp.style, width: '100%' }} placeholder="เช่น ตอบคำถามถูก"
+                  value={award.note} onChange={e => setAward(a => ({ ...a, note: e.target.value }))} />
+              </div>
+            </div>
+            <div className="row" style={{ gap: 10 }}>
+              <button className="btn" style={{ background: 'linear-gradient(120deg,var(--navy),var(--navy-2))', color: '#fff', padding: '11px 28px', fontSize: 15 }}
+                onClick={giveScore}>
+                <Icon name="bolt" size={17} /> มอบ {award.amount} {TYPE_OPTS.find(t => t.key === award.type)?.label}
+              </button>
+              <button className="btn btn-ghost" onClick={() => setFound(null)}>ยกเลิก</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* flash notification */}
+      {flash && (
+        <div style={{ position: 'fixed', top: 24, right: 24, zIndex: 500, padding: '14px 22px', borderRadius: 'var(--r-lg)',
+          background: 'linear-gradient(120deg,var(--navy),var(--navy-2))', color: '#fff', fontWeight: 700, fontSize: 16,
+          boxShadow: '0 8px 32px -8px var(--navy)', animation: 'portalText .4s ease-out' }}>
+          ✅ {flash.nick} +{flash.amount} {flash.type.toUpperCase()}
+        </div>
+      )}
+
+      {/* score log */}
+      {log.length > 0 && (
+        <div className="glass col" style={{ borderRadius: 'var(--r-xl)', padding: 20, gap: 12 }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--ink)' }}>ประวัติการมอบรางวัล</div>
+          <div className="col" style={{ gap: 6, maxHeight: 320, overflowY: 'auto' }}>
+            {log.map((e, i) => {
+              const t = TYPE_OPTS.find(x => x.key === e.type) || TYPE_OPTS[0];
+              const dt = new Date(e.at);
+              const timeStr = dt.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+              return (
+                <div key={i} className="row" style={{ gap: 12, padding: '9px 12px', borderRadius: 'var(--r-md)', background: 'var(--surface-2)', alignItems: 'center' }}>
+                  <div className="center" style={{ width: 36, height: 36, borderRadius: 10, background: 'color-mix(in oklch,' + t.color + ' 16%,transparent)', color: t.color, flexShrink: 0 }}>
+                    <Icon name={t.icon} size={18} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div className="row" style={{ gap: 6 }}>
+                      <span style={{ fontWeight: 700, color: 'var(--ink)', fontSize: 13.5 }}>{e.nick}</span>
+                      <span style={{ color: 'var(--muted)', fontSize: 12 }}>#{e.studentCode}</span>
+                    </div>
+                    {e.note && <div style={{ fontSize: 12, color: 'var(--muted)' }}>{e.note}</div>}
+                  </div>
+                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                    <div style={{ fontWeight: 800, color: t.color, fontSize: 15 }}>+{e.amount} {t.label}</div>
+                    <div style={{ fontSize: 11, color: 'var(--muted)' }}>{timeStr}</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <button className="btn btn-ghost" style={{ alignSelf: 'flex-start', fontSize: 12.5 }}
+            onClick={() => { localStorage.removeItem('gcos.score.log'); setLog([]); }}>
+            ล้างประวัติ
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+Object.assign(window, { TeacherShell, TeacherDashboard, BarcodeScore, TEACHER_NAV });

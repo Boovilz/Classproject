@@ -1,12 +1,88 @@
 /* ============================================================
    TEACHER — Health monitoring + Students grid
    ============================================================ */
+function EditStudentModal({ student, onClose }) {
+  const [form, setForm] = React.useState({
+    code: student.code || '',
+    name: student.name || '',
+    nick: student.nick || '',
+    gender: student.gender || 'm',
+    h: String(student.health?.h || 130),
+    w: String(student.health?.w || 28),
+  });
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const inp = { style: { width: '100%', padding: '9px 12px', borderRadius: 'var(--r-md)', border: '1.5px solid var(--surface-2)', background: 'var(--surface-1)', color: 'var(--ink)', fontSize: 14, outline: 'none', boxSizing: 'border-box' } };
+
+  function submit(e) {
+    e.preventDefault();
+    const h = +form.h; const w = +form.w;
+    const bmi = +(w / Math.pow(h / 100, 2)).toFixed(1);
+    const nutrition = bmi < 14 ? 'ผอม' : bmi > 18.5 ? 'ท้วม' : 'สมส่วน';
+    window.GC.updateStudent(student.id, {
+      code: form.code, name: form.name, nick: form.nick, gender: form.gender,
+      health: { ...student.health, h, w, bmi, nutrition },
+    });
+    onClose();
+  }
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,.55)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="glass col" style={{ borderRadius: 'var(--r-xl)', padding: 28, gap: 18, width: 400, maxWidth: '90vw' }}>
+        <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--ink)', fontFamily: 'var(--font-display)' }}>
+            <Icon name="tool" size={17} /> แก้ไขข้อมูลนักเรียน
+          </div>
+          <button onClick={onClose} className="btn btn-ghost" style={{ padding: '4px 8px', fontSize: 18, lineHeight: 1 }}>×</button>
+        </div>
+        <form onSubmit={submit} className="col" style={{ gap: 12 }}>
+          <div className="col" style={{ gap: 5 }}>
+            <label style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--muted)' }}>รหัสนักเรียน</label>
+            <input {...inp} placeholder="เช่น 46201" value={form.code} onChange={e => set('code', e.target.value)} />
+          </div>
+          <div className="col" style={{ gap: 5 }}>
+            <label style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--muted)' }}>ชื่อ-นามสกุล</label>
+            <input {...inp} placeholder="เช่น ด.ช. สมชาย ใจดี" value={form.name} onChange={e => set('name', e.target.value)} />
+          </div>
+          <div className="col" style={{ gap: 5 }}>
+            <label style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--muted)' }}>ชื่อเล่น</label>
+            <input {...inp} placeholder="เช่น เจ" value={form.nick} onChange={e => set('nick', e.target.value)} />
+          </div>
+          <div className="row" style={{ gap: 12 }}>
+            <div className="col" style={{ gap: 5, flex: 1 }}>
+              <label style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--muted)' }}>เพศ</label>
+              <select {...inp} value={form.gender} onChange={e => set('gender', e.target.value)}>
+                <option value="m">ชาย</option>
+                <option value="f">หญิง</option>
+              </select>
+            </div>
+            <div className="col" style={{ gap: 5, flex: 1 }}>
+              <label style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--muted)' }}>ส่วนสูง (ซม.)</label>
+              <input {...inp} type="number" min="80" max="200" value={form.h} onChange={e => set('h', e.target.value)} />
+            </div>
+            <div className="col" style={{ gap: 5, flex: 1 }}>
+              <label style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--muted)' }}>น้ำหนัก (กก.)</label>
+              <input {...inp} type="number" min="10" max="100" step="0.1" value={form.w} onChange={e => set('w', e.target.value)} />
+            </div>
+          </div>
+          <div className="row" style={{ gap: 10, justifyContent: 'flex-end', marginTop: 4 }}>
+            <button type="button" onClick={onClose} className="btn btn-ghost">ยกเลิก</button>
+            <button type="submit" className="btn" style={{ background: 'linear-gradient(120deg,var(--navy),var(--navy-2))', color: '#fff' }}>
+              <Icon name="check" size={15} /> บันทึก
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 function Health() {
-  const { STUDENTS } = window.GC;
-  const [sel, setSel] = React.useState(STUDENTS[0].id);
-  const st = STUDENTS.find(s => s.id === sel);
+  const students = window.GC.getStudents();
+  const [sel, setSel] = React.useState(students[0]?.id);
+  const st = students.find(s => s.id === sel) || students[0];
   const nutColor = n => n === 'สมส่วน' ? 'var(--st-present)' : n === 'ผอม' ? 'var(--st-late)' : 'var(--st-sick)';
-  const dist = ['ผอม', 'สมส่วน', 'ท้วม'].map(n => [n, STUDENTS.filter(s => s.health.nutrition === n).length]);
+  const dist = ['ผอม', 'สมส่วน', 'ท้วม'].map(n => [n, students.filter(s => s.health.nutrition === n).length]);
 
   return (
     <div className="col" style={{ gap: 18 }}>
@@ -26,7 +102,7 @@ function Health() {
         </div>
         <div style={{ flex: 1, minWidth: 220 }}>
           <div className="row" style={{ height: 14, borderRadius: 99, overflow: 'hidden', marginTop: 26 }}>
-            {dist.map(([n, c]) => <div key={n} style={{ width: (c / STUDENTS.length * 100) + '%', background: nutColor(n) }} />)}
+            {dist.map(([n, c]) => <div key={n} style={{ width: (c / students.length * 100) + '%', background: nutColor(n) }} />)}
           </div>
           <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 8 }}>อ้างอิงเกณฑ์กรมอนามัย · อัปเดตเดือน ธ.ค. 2568</div>
         </div>
@@ -37,7 +113,7 @@ function Health() {
         {/* student list */}
         <div className="glass scroll" style={{ borderRadius: 'var(--r-lg)', padding: 12, maxHeight: 560 }}>
           <div className="col" style={{ gap: 4 }}>
-            {STUDENTS.map(s => {
+            {students.map(s => {
               const on = s.id === sel;
               return (
                 <button key={s.id} onClick={() => setSel(s.id)} className="row" style={{ gap: 11, padding: 9, borderRadius: 'var(--r-md)', cursor: 'pointer', border: 'none', textAlign: 'left',
@@ -115,7 +191,7 @@ function Health() {
 }
 
 function AddStudentModal({ onClose }) {
-  const [form, setForm] = React.useState({ name: '', nick: '', gender: 'm', h: '130', w: '28' });
+  const [form, setForm] = React.useState({ code: '', name: '', nick: '', gender: 'm', h: '130', w: '28' });
   const [err, setErr] = React.useState('');
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
@@ -140,6 +216,10 @@ function AddStudentModal({ onClose }) {
         </div>
 
         <form onSubmit={submit} className="col" style={{ gap: 12 }}>
+          <div className="col" style={{ gap: 5 }}>
+            <label style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--muted)' }}>รหัสนักเรียน</label>
+            <input {...inp} placeholder="เช่น 46217" value={form.code} onChange={e => set('code', e.target.value)} />
+          </div>
           <div className="col" style={{ gap: 5 }}>
             <label style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--muted)' }}>ชื่อ-นามสกุล *</label>
             <input {...inp} placeholder="เช่น ด.ช. สมชาย ใจดี" value={form.name} onChange={e => set('name', e.target.value)} />
@@ -183,7 +263,8 @@ function StudentsGrid({ openStudent }) {
   const [students, setStudents] = React.useState(getStudents);
   const [filter, setFilter] = React.useState('all');
   const [showAdd, setShowAdd] = React.useState(false);
-  const [confirmDel, setConfirmDel] = React.useState(null); // student id
+  const [editStudent, setEditStudent] = React.useState(null);
+  const [confirmDel, setConfirmDel] = React.useState(null);
 
   React.useEffect(() => {
     const refresh = () => setStudents(getStudents());
@@ -235,6 +316,11 @@ function StudentsGrid({ openStudent }) {
                 onMouseLeave={e => e.currentTarget.style.transform = 'none'}>
                 <span className="pill" style={{ position: 'absolute', top: 10, right: 36, fontSize: 10.5,
                   background: 'color-mix(in oklch,' + stat.color + ' 16%,transparent)', color: stat.color }}>{stat.short}</span>
+                <button onClick={e => { e.stopPropagation(); setEditStudent(s); }}
+                  style={{ position: 'absolute', top: 8, right: 32, width: 22, height: 22, borderRadius: 6,
+                    border: 'none', background: 'color-mix(in oklch,var(--navy) 18%,transparent)',
+                    color: 'var(--navy)', fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  title="แก้ไขข้อมูล">✎</button>
                 <button onClick={e => handleDelete(e, s.id)}
                   style={{ position: 'absolute', top: 8, right: 8, width: 22, height: 22, borderRadius: 6,
                     border: 'none', background: 'color-mix(in oklch,var(--st-absent) 18%,transparent)',
@@ -244,6 +330,7 @@ function StudentsGrid({ openStudent }) {
                 <div>
                   <div style={{ fontSize: 14.5, fontWeight: 700, color: 'var(--ink)', fontFamily: 'var(--font-display)' }}>{s.nick}</div>
                   <div className="nowrap" style={{ fontSize: 11.5, color: 'var(--muted)', maxWidth: 150 }}>{s.name}</div>
+                  {s.code && <div style={{ fontSize: 10.5, color: 'var(--muted)', marginTop: 2 }}>#{s.code}</div>}
                 </div>
                 <div className="row" style={{ gap: 12, fontSize: 12, color: 'var(--ink-soft)' }}>
                   <span className="row" style={{ gap: 4 }}><Icon name="bolt" size={13} color="var(--navy)" /> Lv.{s.game.level}</span>
@@ -255,6 +342,7 @@ function StudentsGrid({ openStudent }) {
         </div>
       </div>
 
+      {editStudent && <EditStudentModal student={editStudent} onClose={() => setEditStudent(null)} />}
       {showAdd && <AddStudentModal onClose={() => setShowAdd(false)} />}
 
       {confirmDel && (

@@ -2,7 +2,7 @@
    APP SHELL — router + world switching + cinematic transitions
    ============================================================ */
 const {
-  Login, Portal, TeacherShell, TeacherDashboard, Attendance, Health, StudentsGrid,
+  Login, Portal, TeacherShell, TeacherDashboard, Attendance, Health, StudentsGrid, BarcodeScore,
   GameShell, GameHome, StudentProfile, TerritoryMap, RewardShop, GamesHub, ClassroomTools, StatusBoard,
   ClassroomKingdom, QuestBoard, HallOfFame, StudentGuild,
   BossRaid, PetSanctuary, SeasonHub,
@@ -44,6 +44,7 @@ function App() {
     const inner = tRoute === 'dashboard' ? <TeacherDashboard openStudent={openStudent} />
       : tRoute === 'attendance' ? <Attendance openStudent={openStudent} />
       : tRoute === 'health' ? <Health />
+      : tRoute === 'barcode' ? <BarcodeScore />
       : <StudentsGrid openStudent={openStudent} />;
     body = (
       <TeacherShell key="t" route={tRoute} setRoute={setTRoute} onPortal={goPortal} onLogout={() => setStage('login')}>
