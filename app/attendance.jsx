@@ -37,6 +37,19 @@ function Attendance({ openStudent }) {
   const [showBarcode, setShowBarcode] = React.useState(false);
   const calBtnRef = React.useRef(null);
   const [calDropPos, setCalDropPos] = React.useState({ top: 0, left: 0 });
+  const [awardRow, setAwardRow] = React.useState(null); // student id
+  const [awardType, setAwardType] = React.useState('xp');
+  const [awardAmt, setAwardAmt] = React.useState(10);
+  const [awardToast, setAwardToast] = React.useState(null);
+
+  function doAward(studentId) {
+    const st = student(studentId);
+    if (!st) return;
+    window.GC.addScoreLog({ studentId, studentName: st.name, type: awardType, amount: awardAmt, note: 'จากเช็คชื่อ' });
+    setAwardToast(`+${awardAmt} ${awardType.toUpperCase()} → ${st.nick}`);
+    setTimeout(() => setAwardToast(null), 2500);
+    setAwardRow(null);
+  }
 
   // reload rows when date changes
   React.useEffect(() => {
@@ -117,6 +130,14 @@ function Attendance({ openStudent }) {
 
   return (
     <div className="col" style={{ gap: 18 }}>
+      {awardToast && (
+        <div style={{ position: 'fixed', bottom: 32, left: '50%', transform: 'translateX(-50%)', zIndex: 9999,
+          background: 'linear-gradient(120deg,var(--gold),oklch(0.72 0.16 55))', color: '#1a1200',
+          padding: '10px 22px', borderRadius: 99, fontWeight: 700, fontSize: 14,
+          boxShadow: '0 8px 32px -8px var(--gold)', animation: 'rise .2s ease-out' }}>
+          ⚡ {awardToast}
+        </div>
+      )}
 
       {/* ── week strip ── */}
       <div className="glass row" style={{ borderRadius: 'var(--r-lg)', padding: '14px 18px', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
@@ -167,20 +188,20 @@ function Attendance({ openStudent }) {
 
             {/* mini calendar dropdown — rendered via portal to escape scroll clipping */}
             {showCal && ReactDOM.createPortal(
-              <div className="glass pop" style={{ position: 'fixed', top: calDropPos.top, left: calDropPos.left, zIndex: 9999, borderRadius: 'var(--r-lg)', padding: 16, width: 280, boxShadow: '0 20px 50px -16px rgba(0,0,0,.4)' }}>
+              <div className="pop" style={{ position: 'fixed', top: calDropPos.top, left: calDropPos.left, zIndex: 9999, borderRadius: 'var(--r-lg)', padding: 16, width: 280, boxShadow: '0 20px 60px -12px rgba(0,0,0,.55)', background: 'oklch(0.16 0.025 255)', border: '1px solid oklch(0.28 0.03 255)' }}>
                 <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
                   <button onClick={() => setCalMonth(({y,m}) => m === 0 ? {y:y-1,m:11} : {y,m:m-1})}
-                    style={{ border:'none',background:'transparent',cursor:'pointer',color:'var(--ink-soft)',fontSize:18,padding:'0 6px' }}>‹</button>
-                  <span style={{ fontWeight: 700, color: 'var(--ink)', fontSize: 14 }}>
+                    style={{ border:'none',background:'transparent',cursor:'pointer',color:'#aab',fontSize:18,padding:'0 6px' }}>‹</button>
+                  <span style={{ fontWeight: 700, color: '#fff', fontSize: 14 }}>
                     {TH_MONTHS_FULL[calMonth.m]} {calMonth.y}
                   </span>
                   <button onClick={() => setCalMonth(({y,m}) => m === 11 ? {y:y+1,m:0} : {y,m:m+1})}
-                    style={{ border:'none',background:'transparent',cursor:'pointer',color:'var(--ink-soft)',fontSize:18,padding:'0 6px' }}>›</button>
+                    style={{ border:'none',background:'transparent',cursor:'pointer',color:'#aab',fontSize:18,padding:'0 6px' }}>›</button>
                 </div>
                 {/* day-of-week header */}
                 <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:2, marginBottom:4 }}>
                   {['จ','อ','พ','พฤ','ศ','ส','อา'].map(d => (
-                    <div key={d} style={{ textAlign:'center', fontSize:11, color:'var(--muted)', fontWeight:600 }}>{d}</div>
+                    <div key={d} style={{ textAlign:'center', fontSize:11, color:'#778', fontWeight:600 }}>{d}</div>
                   ))}
                 </div>
                 {/* cells */}
@@ -195,9 +216,9 @@ function Attendance({ openStudent }) {
                     return (
                       <button key={i} onClick={() => school && jumpToDate(k)}
                         style={{ border:'none', borderRadius:8, padding:'5px 2px', cursor: school ? 'pointer':'default',
-                          background: isSel ? 'var(--navy)' : isT ? 'var(--surface-2)' : 'transparent',
-                          color: isSel ? '#fff' : school ? 'var(--ink)' : 'var(--muted)',
-                          opacity: school ? 1 : 0.3,
+                          background: isSel ? 'var(--navy)' : isT ? 'oklch(0.26 0.04 255)' : 'transparent',
+                          color: isSel ? '#fff' : school ? '#dde' : '#556',
+                          opacity: school ? 1 : 0.4,
                           outline: isT && !isSel ? '1.5px solid var(--navy)' : 'none',
                           fontSize: 13, textAlign:'center', position:'relative' }}>
                         {d.getDate()}
@@ -206,7 +227,7 @@ function Attendance({ openStudent }) {
                     );
                   })}
                 </div>
-                <div style={{ marginTop:10, fontSize:11.5, color:'var(--muted)', textAlign:'center' }}>
+                <div style={{ marginTop:10, fontSize:11.5, color:'#667', textAlign:'center' }}>
                   ปีการศึกษา 2568 · เทอม 1 (พ.ค.–ต.ค. 68) · เทอม 2 (พ.ย. 68–มี.ค. 69)
                 </div>
               </div>
@@ -291,6 +312,10 @@ function Attendance({ openStudent }) {
             <Icon name="gift" size={16} color="var(--st-late)" />
             <span onClick={() => bulkWelfare('lunch')} style={{ cursor: 'pointer' }}>กลางวัน</span>
           </div>
+          <div className="center" style={{ width: 56, flexDirection: 'column', gap: 4 }}>
+            <Icon name="bolt" size={16} color="var(--gold)" />
+            <span style={{ color: 'var(--gold)', fontSize: 10 }}>คะแนน</span>
+          </div>
         </div>
         <div>
           {rows.map((r, i) => {
@@ -298,8 +323,9 @@ function Attendance({ openStudent }) {
             if (!st) return null;
             const stat = STATUSES[r.status] || STATUSES['present'];
             return (
-              <div key={r.id} className="row"
-                style={{ padding: '10px 20px', borderBottom: i < rows.length - 1 ? '1px solid var(--line-soft)' : 'none',
+              <React.Fragment key={r.id}>
+              <div className="row"
+                style={{ padding: '10px 20px', borderBottom: awardRow === r.id ? 'none' : (i < rows.length - 1 ? '1px solid var(--line-soft)' : 'none'),
                   background: i % 2 ? 'transparent' : 'var(--surface-2)' }}>
                 <div className="tech" style={{ width: 38, color: 'var(--muted)', fontSize: 14 }}>{String(st.no).padStart(2, '0')}</div>
                 <div className="row" style={{ flex: 1, gap: 11, cursor: 'pointer' }} onClick={() => openStudent(st.id)}>
@@ -345,7 +371,43 @@ function Attendance({ openStudent }) {
                     </button>
                   </div>
                 ))}
+                {/* per-student score button */}
+                <div className="center" style={{ width: 56 }}>
+                  <button onClick={() => setAwardRow(awardRow === r.id ? null : r.id)} className="center"
+                    style={{ width: 32, height: 32, borderRadius: 9, cursor: 'pointer', border: 'none',
+                      background: awardRow === r.id ? 'var(--gold)' : 'color-mix(in oklch,var(--gold) 16%,transparent)',
+                      color: awardRow === r.id ? '#1a1200' : 'var(--gold)', transition: 'all .18s' }}>
+                    <Icon name="bolt" size={16} color={awardRow === r.id ? '#1a1200' : 'var(--gold)'} />
+                  </button>
+                </div>
               </div>
+              {/* inline award expand */}
+              {awardRow === r.id && (
+                <div className="row" style={{ padding: '10px 20px 12px', gap: 10, background: 'color-mix(in oklch,var(--gold) 8%,transparent)', borderTop: '1px dashed color-mix(in oklch,var(--gold) 30%,transparent)', flexWrap: 'wrap', alignItems: 'center' }}>
+                  <span style={{ fontSize: 13, color: 'var(--gold)', fontWeight: 600 }}>มอบให้ {st.nick}</span>
+                  <div className="row" style={{ gap: 4 }}>
+                    {[['xp','⚡ XP'],['coin','🪙 Coin'],['star','⭐ Star']].map(([t,l]) => (
+                      <button key={t} onClick={() => setAwardType(t)} className="btn"
+                        style={{ padding: '5px 11px', fontSize: 12, background: awardType === t ? 'var(--navy)' : 'var(--surface-2)', color: awardType === t ? '#fff' : 'var(--ink-soft)' }}>
+                        {l}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="row" style={{ gap: 4 }}>
+                    {[5,10,20,50].map(v => (
+                      <button key={v} onClick={() => setAwardAmt(v)} className="btn"
+                        style={{ padding: '5px 10px', fontSize: 12, background: awardAmt === v ? 'var(--gold)' : 'var(--surface-2)', color: awardAmt === v ? '#1a1200' : 'var(--ink-soft)' }}>
+                        +{v}
+                      </button>
+                    ))}
+                  </div>
+                  <button onClick={() => doAward(r.id)} className="btn"
+                    style={{ padding: '7px 16px', fontSize: 13, background: 'linear-gradient(120deg,var(--gold),oklch(0.72 0.16 55))', color: '#1a1200', fontWeight: 700 }}>
+                    มอบ +{awardAmt}
+                  </button>
+                </div>
+              )}
+              </React.Fragment>
             );
           })}
         </div>

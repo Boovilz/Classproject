@@ -298,7 +298,34 @@
     const log = getScoreLog();
     log.unshift({ ...entry, at: Date.now() });
     localStorage.setItem(LS_SCORE, JSON.stringify(log.slice(0, 200)));
+    // update student game stats so all modules stay in sync
+    if (entry.studentId) {
+      const all = getStudents();
+      const s = all.find(x => x.id === entry.studentId);
+      if (s) {
+        const game = { ...s.game };
+        const amt = Number(entry.amount) || 0;
+        if (entry.type === 'xp') {
+          game.xp = (game.xp || 0) + amt;
+          while (game.xp >= (game.xpMax || 1000)) {
+            game.xp -= (game.xpMax || 1000);
+            game.level = (game.level || 1) + 1;
+            game.tier = tierOf(game.level);
+            game.rankIdx = Math.min(5, Math.floor(game.level / 4.2));
+            game.rank = RANKS[game.rankIdx].key;
+          }
+        } else if (entry.type === 'coin') {
+          game.coins = (game.coins || 0) + amt;
+        } else if (entry.type === 'star') {
+          game.stars = (game.stars || 0) + amt;
+        }
+        const ov = getOverrides();
+        ov[entry.studentId] = { ...(ov[entry.studentId] || {}), game };
+        localStorage.setItem(LS_OVERRIDES, JSON.stringify(ov));
+      }
+    }
     window.dispatchEvent(new CustomEvent('gc:score-added', { detail: entry }));
+    window.dispatchEvent(new CustomEvent('gc:students-changed'));
   }
 
   // ---- student overrides (for updateStudent) ----
