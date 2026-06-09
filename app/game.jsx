@@ -10,6 +10,8 @@ const GAME_NAV = [
   { key: 'quests',    th: 'เควสต์',    icon: 'report' },
   { key: 'hall',      th: 'เกียรติยศ', icon: 'trophy' },
   { key: 'shop',      th: 'ร้านค้า',   icon: 'shop' },
+  { key: 'guild',     th: 'กิลด์วอร์',  icon: 'shield' },
+  { key: 'classach',  th: 'ห้องสำเร็จ', icon: 'trophy' },
   { key: 'tools',     th: 'เครื่องมือ', icon: 'timer' },
   { key: 'status',    th: 'สถานะสด',   icon: 'bolt' },
   { key: 'scores',    th: 'คะแนนรวม',  icon: 'report' },
@@ -18,6 +20,7 @@ const GAME_NAV = [
 function GameShell({ route, setRoute, onPortal, children }) {
   const { CLASS } = window.GC;
   const [totals, setTotals] = React.useState(() => window.GC.getClassTotals());
+  const dailyEvent = React.useMemo(() => window.GC.getDailyEvent(), []);
   React.useEffect(() => {
     const h = () => setTotals(window.GC.getClassTotals());
     window.addEventListener('gc:students-changed', h);
@@ -72,6 +75,15 @@ function GameShell({ route, setRoute, onPortal, children }) {
             </div>
           </div>
         </header>
+        {dailyEvent && (
+          <div className="row" style={{ padding: '8px 28px', gap: 10, borderBottom: '1px solid var(--line)',
+            background: `linear-gradient(90deg, color-mix(in oklch,oklch(0.7 0.18 ${dailyEvent.hue}) 14%,transparent), transparent 70%)` }}>
+            <Icon name={dailyEvent.icon} size={16} color={`oklch(0.82 0.18 ${dailyEvent.hue})`} />
+            <span className="tech" style={{ fontSize: 12, color: `oklch(0.88 0.14 ${dailyEvent.hue})`, fontWeight: 700 }}>{dailyEvent.th}</span>
+            <span style={{ fontSize: 12, color: 'var(--ink-soft)' }}>—</span>
+            <span style={{ fontSize: 12, color: 'var(--ink-soft)' }}>{dailyEvent.desc}</span>
+          </div>
+        )}
         <main className="scroll" style={{ flex: 1, padding: '28px 28px 96px' }}>{children}</main>
       </div>
     </div>

@@ -104,6 +104,14 @@
     }));
   }
 
+  // ---- guilds ----
+  const GUILDS = [
+    { key: 'fire',  th: 'กิลด์เพลิง', en: 'Fire Guild',  icon: 'fire',  hue: 22,  color: 'oklch(0.7 0.22 28)'  },
+    { key: 'water', th: 'กิลด์น้ำ',   en: 'Water Guild', icon: 'drop',  hue: 220, color: 'oklch(0.7 0.18 225)' },
+    { key: 'wind',  th: 'กิลด์ลม',    en: 'Wind Guild',  icon: 'spark', hue: 155, color: 'oklch(0.7 0.18 155)' },
+    { key: 'earth', th: 'กิลด์ดิน',   en: 'Earth Guild', icon: 'map',   hue: 88,  color: 'oklch(0.7 0.18 88)'  },
+  ];
+
   const STUDENTS = NAMES.map((n, i) => {
     const level = [12,18,7,15,5,21,9,11,24,8,3,16,13,6,19,10][i];
     const xp = seeded(i, 120, 940);
@@ -135,6 +143,7 @@
         hue: (i * 41) % 360,
       },
       badges: seeded(i, 1, 9),
+      guild: GUILDS[i % 4].key,
     };
   });
 
@@ -531,6 +540,65 @@
     return days;
   }
 
+  // ---- daily random event (deterministic per date) ----
+  const DAILY_EVENTS = [
+    { key: 'xp2',      th: '🌈 Rainbow Day',   desc: 'XP ทุกกิจกรรมวันนี้ ×2',     icon: 'spark',  hue: 305 },
+    { key: 'treasure', th: '💎 Treasure Day',   desc: 'สุ่มเหรียญพิเศษเมื่อเช็คชื่อ', icon: 'coin',   hue: 50  },
+    { key: 'stars',    th: '⭐ Star Shower',     desc: 'ดาวทุกรางวัลเพิ่มเป็น 2×',    icon: 'star',   hue: 88  },
+    { key: 'quest',    th: '📜 Quest Blitz',     desc: 'เควสต์วันนี้ให้ XP +50%',      icon: 'report', hue: 160 },
+    { key: 'boss',     th: '🐉 Boss Rush',       desc: 'HP บอสลดลง 30% วันนี้',        icon: 'fire',   hue: 22  },
+    null, null, null, null,
+  ];
+  function getDailyEvent() {
+    const today = dateKey(new Date());
+    const parts = today.split('-').map(Number);
+    const hash = (parts[0] * 31 + parts[1] * 7 + parts[2]) % DAILY_EVENTS.length;
+    return DAILY_EVENTS[hash];
+  }
+
+  // ---- guild stats (reactive) ----
+  function getGuildStats() {
+    const ss = getStudents();
+    return GUILDS.map(function(g) {
+      const members = ss.filter(function(s) { return s.guild === g.key; });
+      const xp = members.reduce(function(a, s) { return a + s.game.level * 1000 + s.game.xp; }, 0);
+      const stars = members.reduce(function(a, s) { return a + s.game.stars; }, 0);
+      const coins = members.reduce(function(a, s) { return a + s.game.coins; }, 0);
+      const sorted = [...members].sort(function(a, b) { return (b.game.level * 1000 + b.game.xp) - (a.game.level * 1000 + a.game.xp); });
+      return Object.assign({}, g, { members: sorted, xp: xp, stars: stars, coins: coins, mvp: sorted[0] });
+    }).sort(function(a, b) { return b.xp - a.xp; });
+  }
+
+  // ---- class-level achievements ----
+  const LS_CLASS_ACH = 'gcos.class.achievements';
+  const CLASS_ACHIEVEMENTS = [
+    { key: 'attend_all',  th: 'เข้าเรียนครบทั้งห้อง',          icon: 'check',  hue: 150, badge: 'Perfect Attendance', reward: '+500 XP ห้อง', condition: function(ss) { return ss.every(function(s) { return s.status !== 'absent'; }); } },
+    { key: 'stars100',    th: 'ดาวรวม 100 ดวง',                 icon: 'star',   hue: 50,  badge: 'Star Collective',    reward: '+300 XP ห้อง', condition: function(ss) { return ss.reduce(function(a,s) { return a+s.game.stars; },0) >= 100; } },
+    { key: 'level10x5',   th: 'นักเรียน 5 คน ขึ้น Lv.10+',     icon: 'crown',  hue: 265, badge: 'Rising Stars',       reward: '+200 XP ห้อง', condition: function(ss) { return ss.filter(function(s){ return s.game.level >= 10; }).length >= 5; } },
+    { key: 'nogap',       th: 'ไม่มีใครขาด (วันนี้)',           icon: 'shield', hue: 88,  badge: 'Shield of Unity',    reward: '+400 XP ห้อง', condition: function(ss) { return ss.every(function(s) { return s.status !== 'absent'; }); } },
+    { key: 'coins5000',   th: 'เหรียญรวม 5,000+',               icon: 'coin',   hue: 50,  badge: 'Treasure Vault',     reward: 'กล่องสมบัติ',   condition: function(ss) { return ss.reduce(function(a,s){return a+s.game.coins;},0) >= 5000; } },
+    { key: 'territory50', th: 'ทุกดินแดนเฉลี่ย 50%+',           icon: 'map',    hue: 200, badge: 'World Explorers',    reward: 'ตราสำรวจโลก',   condition: function(ss) { return SUBJECTS.every(function(sub) { return ss.reduce(function(a,s){return a+(s.game.territories[sub.key]||0);},0)/ss.length >= 50; }); } },
+    { key: 'allguild',    th: 'ทุกกิลด์มีสมาชิก Lv.5+',        icon: 'fire',   hue: 22,  badge: 'Alliance of Power',  reward: '+250 XP ทุกคน', condition: function(ss) { return GUILDS.every(function(g) { return ss.filter(function(s){ return s.guild===g.key && s.game.level>=5; }).length >= 1; }); } },
+    { key: 'badges20',    th: 'เหรียญตราสะสม 20+',              icon: 'trophy', hue: 280, badge: 'Badge Hunters',      reward: 'ของรางวัลพิเศษ', condition: function(ss) { return ss.reduce(function(a,s){return a+(s.badges||0);},0) >= 20; } },
+  ];
+  function getClassAchievements() {
+    const ss = getStudents();
+    var claimed = [];
+    try { claimed = JSON.parse(localStorage.getItem(LS_CLASS_ACH)) || []; } catch(e) {}
+    return CLASS_ACHIEVEMENTS.map(function(a) {
+      return Object.assign({}, a, { done: a.condition(ss), claimed: claimed.includes(a.key) });
+    });
+  }
+  function claimClassAchievement(key) {
+    var list = [];
+    try { list = JSON.parse(localStorage.getItem(LS_CLASS_ACH)) || []; } catch(e) {}
+    if (!list.includes(key)) {
+      list.push(key);
+      localStorage.setItem(LS_CLASS_ACH, JSON.stringify(list));
+    }
+    window.dispatchEvent(new CustomEvent('gc:students-changed'));
+  }
+
   // ---- titles (earned by meeting conditions, highest match wins) ----
   const TITLES = [
     { key: 'newcomer',   th: 'นักสำรวจรุ่นใหม่',    en: 'New Explorer',       hue: 200, icon: 'map',    condition: s => s.game.level >= 1 },
@@ -611,6 +679,8 @@
     STUDENTS, CLASS, WEEK_TREND,
     CLASS_XP, CLASS_LEVEL, SEASON, PET, QUESTS, ACHIEVEMENTS, KINGDOM_ZONES,
     BOSS, SEASONS, SEASON_TRACK,
+    GUILDS, DAILY_EVENTS, CLASS_ACHIEVEMENTS,
+    getDailyEvent, getGuildStats, getClassAchievements, claimClassAchievement,
     TITLES, getTitleForStudent, getStudentStreak, getAchievements,
     getStudents, addStudent, deleteStudent, updateStudent,
     getClass, updateClass,

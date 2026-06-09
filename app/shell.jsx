@@ -6,6 +6,7 @@ const {
   GameShell, GameHome, StudentProfile, TerritoryMap, RewardShop, GamesHub, ClassroomTools, StatusBoard,
   ClassroomKingdom, QuestBoard, HallOfFame, StudentGuild,
   BossRaid, PetSanctuary, SeasonHub, ScoreHistory,
+  GuildWar, ClassAchieve,
 } = window;
 
 const LS = 'gcos.nav';
@@ -62,6 +63,8 @@ function App() {
       : gRoute === 'boss' ? <BossRaid openStudent={openStudent} />
       : gRoute === 'pet' ? <PetSanctuary />
       : gRoute === 'season' ? <SeasonHub go={setGRoute} />
+      : gRoute === 'guild' ? <GuildWar openStudent={openStudent} />
+      : gRoute === 'classach' ? <ClassAchieve />
       : gRoute === 'tools' ? <ClassroomTools />
       : gRoute === 'scores' ? <ScoreHistory openStudent={openStudent} />
       : <StatusBoard openStudent={openStudent} />;
