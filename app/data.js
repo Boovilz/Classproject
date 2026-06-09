@@ -368,6 +368,95 @@
     window.dispatchEvent(new CustomEvent('gc:students-changed'));
   }
 
+  // ---- full academic year attendance history ----
+  // ปีการศึกษา 2568: เทอม 1 = 19 พ.ค. 68 - 10 ต.ค. 68
+  //                   เทอม 2 = 3 พ.ย. 68 - 20 มี.ค. 69 (= CE 2025-2026)
+  // Today in app = 29 May 2026 (CE) = first weeks of next academic year
+  const YEAR_START = new Date(2025, 4, 19);  // 19 May 2025
+  const YEAR_END   = new Date(2026, 4, 29);  // 29 May 2026 (today)
+
+  // Thai public holidays to skip (MM-DD format, year-agnostic)
+  const HOLIDAYS = new Set([
+    '05-05','06-03','07-28','08-12','10-13','10-23','12-05','12-10','12-31',
+    '01-01','01-13','02-26','04-06','04-13','04-14','04-15','05-01','05-12',
+  ]);
+
+  function isSchoolDay(d) {
+    const day = d.getDay();
+    if (day === 0 || day === 6) return false;
+    const mmdd = String(d.getMonth() + 1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    if (HOLIDAYS.has(mmdd)) return false;
+    // semester break: Oct 11 - Nov 2, and Mar 21 - May 18
+    const m = d.getMonth() + 1, dt = d.getDate();
+    if ((m === 10 && dt >= 11) || m === 11 && dt <= 2) return false;
+    if ((m === 3 && dt >= 21) || m === 4 || (m === 5 && dt <= 18)) return false;
+    return true;
+  }
+
+  function dateKey(d) {
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+
+  // deterministic seeded status per student per day
+  const STATUS_POOL = ['present','present','present','present','present','present','present','late','absent','sick','leave','activity'];
+  function seededStatus(studentIdx, dayOffset) {
+    const x = Math.sin(studentIdx * 127.1 + dayOffset * 311.7) * 43758.5453;
+    return STATUS_POOL[Math.abs(Math.floor(x * 1000) % STATUS_POOL.length)];
+  }
+  function seededBool(studentIdx, dayOffset, salt) {
+    const x = Math.sin(studentIdx * 91.3 + dayOffset * 173.1 + salt) * 43758.5453;
+    return (x - Math.floor(x)) > 0.25;
+  }
+
+  const ATTENDANCE_HISTORY = {};
+  const LS_ATT = 'gcos.att';
+
+  let _dayOffset = 0;
+  const _iter = new Date(YEAR_START);
+  while (_iter <= YEAR_END) {
+    if (isSchoolDay(_iter)) {
+      const key = dateKey(_iter);
+      const off = _dayOffset;
+      ATTENDANCE_HISTORY[key] = STUDENTS.map((s, i) => ({
+        id: s.id,
+        status: seededStatus(i, off),
+        milk:  seededBool(i, off, 1),
+        brush: seededBool(i, off, 2),
+        lunch: seededBool(i, off, 3),
+      }));
+      _dayOffset++;
+    }
+    _iter.setDate(_iter.getDate() + 1);
+  }
+
+  function getAttendance(dateStr) {
+    const LS_KEY = LS_ATT + '.' + dateStr;
+    try {
+      const saved = localStorage.getItem(LS_KEY);
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    // merge history with current students (add new, drop deleted)
+    const students = getStudents();
+    const hist = ATTENDANCE_HISTORY[dateStr] || [];
+    const histMap = Object.fromEntries(hist.map(r => [r.id, r]));
+    return students.map(s => histMap[s.id] || { id: s.id, status: 'present', milk: true, brush: true, lunch: true });
+  }
+
+  function saveAttendance(dateStr, rows) {
+    try { localStorage.setItem(LS_ATT + '.' + dateStr, JSON.stringify(rows)); } catch {}
+  }
+
+  // list all school days between two dates
+  function getSchoolDays(from, to) {
+    const days = [];
+    const d = new Date(from);
+    while (d <= to) {
+      if (isSchoolDay(d)) days.push(dateKey(d));
+      d.setDate(d.getDate() + 1);
+    }
+    return days;
+  }
+
   window.GC = {
     STATUSES, LIVE, RANKS, TIERS, tierOf, SUBJECTS, REWARDS,
     STUDENTS, CLASS, WEEK_TREND,
@@ -376,5 +465,7 @@
     getStudents, addStudent, deleteStudent, updateStudent,
     getClass, updateClass,
     getScoreLog, addScoreLog,
+    ATTENDANCE_HISTORY, getAttendance, saveAttendance, getSchoolDays,
+    YEAR_START, YEAR_END, isSchoolDay, dateKey,
   };
 })();
