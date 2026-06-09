@@ -12,6 +12,7 @@ const GAME_NAV = [
   { key: 'shop',      th: 'ร้านค้า',   icon: 'shop' },
   { key: 'tools',     th: 'เครื่องมือ', icon: 'timer' },
   { key: 'status',    th: 'สถานะสด',   icon: 'bolt' },
+  { key: 'scores',    th: 'คะแนนรวม',  icon: 'report' },
 ];
 
 function GameShell({ route, setRoute, onPortal, children }) {

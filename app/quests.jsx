@@ -3,12 +3,36 @@
    ============================================================ */
 function QuestBoard() {
   const { QUESTS } = window.GC;
+  const STUDENTS = useStudents();
   const [tab, setTab] = React.useState('daily');
   const [claimed, setClaimed] = React.useState({});
   const [toast, setToast] = React.useState(null);
 
+  // compute real cur values from live data
+  const liveCur = React.useMemo(() => {
+    const log = window.GC.getScoreLog();
+    const totals = window.GC.getClassTotals();
+    const avgMath = STUDENTS.length
+      ? Math.round(STUDENTS.reduce((a, s) => a + (s.game.territories.math || 0), 0) / STUDENTS.length)
+      : 0;
+    const hofCount = STUDENTS.filter(s => s.game.level >= 5).length;
+    const weekXP = Math.min(200, Math.round(totals.classXP / 100));
+    return {
+      d1: STUDENTS.filter(s => s.status === 'present').length > 0 ? 1 : 0,
+      d2: Math.min(3, log.filter(e => e.type === 'xp' && e.amount <= 30).length % 4),
+      d3: STUDENTS.filter(s => s.game.stars > 0).length > 0 ? 1 : 0,
+      d4: 0,
+      w1: Math.min(5, STUDENTS.filter(s => s.status === 'present').length > 0 ? 3 : 0),
+      w2: 0,
+      w3: weekXP,
+      s1: avgMath,
+      s2: 0,
+      s3: Math.min(3, hofCount),
+    };
+  }, [STUDENTS]);
+
   const tabs = [['daily', 'รายวัน', 'รีเซ็ตทุกเช้า'], ['weekly', 'รายสัปดาห์', 'รีเซ็ตวันจันทร์'], ['season', 'ฤดูกาล', '45 วัน']];
-  const list = QUESTS[tab];
+  const list = QUESTS[tab].map(q => ({ ...q, cur: liveCur[q.id] ?? q.cur }));
   const rewardLabel = (r) => r.xp ? `+${r.xp} XP` : r.star ? `+${r.star} ดาว` : r.coin ? `+${r.coin} เหรียญ` : r.badge;
   const rewardIcon = (r) => r.xp ? 'bolt' : r.star ? 'star' : r.coin ? 'coin' : 'trophy';
 

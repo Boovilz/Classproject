@@ -40,7 +40,8 @@ function Panel({ children, hue, pad = 18, style }) {
    BOSS BATTLE — cooperative classroom HP event
    ============================================================ */
 function BossRaid({ openStudent }) {
-  const { BOSS, STUDENTS, CLASS } = window.GC;
+  const { BOSS, CLASS } = window.GC;
+  const STUDENTS = useStudents();
   const [hp, setHp] = React.useState(BOSS.hp);
   const [feed, setFeed] = React.useState(BOSS.feed);
   const [hit, setHit] = React.useState(0);
@@ -49,12 +50,16 @@ function BossRaid({ openStudent }) {
   const strike = (atk) => {
     setHp(h => Math.max(0, h - atk.dmg));
     setHit(x => x + 1);
-    setFeed(f => [{ who: Math.floor(Math.random() * STUDENTS.length), dmg: atk.dmg, act: atk.th, t: 'เมื่อสักครู่' }, ...f].slice(0, 6));
+    const idx = Math.floor(Math.random() * STUDENTS.length);
+    setFeed(f => [{ who: idx, dmg: atk.dmg, act: atk.th, t: 'เมื่อสักครู่' }, ...f].slice(0, 6));
   };
 
-  // contributors (deterministic from xp)
-  const contributors = [...STUDENTS].sort((a, b) => b.game.xp - a.game.xp).slice(0, 6)
-    .map((s, i) => ({ s, dmg: 320 - i * 38 }));
+  // contributors ranked by real XP; scale dmg proportionally to max student XP
+  const contributors = React.useMemo(() => {
+    const sorted = [...STUDENTS].sort((a, b) => b.game.xp - a.game.xp).slice(0, 6);
+    const maxXP = sorted[0]?.game.xp || 1;
+    return sorted.map(s => ({ s, dmg: Math.max(10, Math.round((s.game.xp / maxXP) * 320)) }));
+  }, [STUDENTS]);
 
   return (
     <div className="col stagger" style={{ gap: 18 }}>
@@ -109,7 +114,7 @@ function BossRaid({ openStudent }) {
                 <div className="center tech" style={{ position: 'absolute', inset: 0, fontSize: 12, color: '#fff', textShadow: '0 1px 3px #000' }}>{pct}%</div>
               </div>
               <div className="row" style={{ justifyContent: 'space-between', marginTop: 8 }}>
-                <span className="tech" style={{ fontSize: 11, color: 'var(--muted)', letterSpacing: '.06em' }}>ทั้งห้องช่วยกันลด HP · {CLASS.total} นักรบ</span>
+                <span className="tech" style={{ fontSize: 11, color: 'var(--muted)', letterSpacing: '.06em' }}>ทั้งห้องช่วยกันลด HP · {STUDENTS.length} นักรบ</span>
                 {hp === 0 && <span className="pill tech" style={{ background: 'color-mix(in oklch,var(--st-present) 25%,transparent)', color: 'var(--st-present)', fontSize: 12 }}>ปราบบอสสำเร็จ! 🎉</span>}
               </div>
             </div>
@@ -189,19 +194,26 @@ function BossRaid({ openStudent }) {
    PET SANCTUARY — class mascot raised cooperatively
    ============================================================ */
 function PetSanctuary() {
-  const { PET, STUDENTS, CLASS } = window.GC;
+  const { PET, CLASS } = window.GC;
+  const STUDENTS = useStudents();
   const [xp, setXp] = React.useState(PET.xp);
   const [fed, setFed] = React.useState(PET.fedToday);
   const [bounce, setBounce] = React.useState(0);
   const [mood, setMood] = React.useState(PET.mood);
-  const feed = (amt) => { setBounce(b => b + 1); setFed(f => Math.min(CLASS.total, f + 1)); setXp(x => Math.min(PET.xpMax, x + amt)); setMood('ร่าเริงมาก'); };
+  const feed = (amt) => { setBounce(b => b + 1); setFed(f => Math.min(STUDENTS.length, f + 1)); setXp(x => Math.min(PET.xpMax, x + amt)); setMood('ร่าเริงมาก'); };
 
-  const stages = [
-    { th: 'ไข่มังกร', lv: '1-3', icon: 'drop', done: true },
-    { th: 'วัยเด็ก', lv: '4-8', icon: 'fire', cur: true },
-    { th: 'วัยรุ่น', lv: '9-15', icon: 'bolt', done: false },
-    { th: 'มังกรโบราณ', lv: '16+', icon: 'crown', done: false },
+  const stageDefs = [
+    { th: 'ไข่มังกร', lv: [1, 3], icon: 'drop' },
+    { th: 'วัยเด็ก',  lv: [4, 8], icon: 'fire' },
+    { th: 'วัยรุ่น',  lv: [9, 15], icon: 'bolt' },
+    { th: 'มังกรโบราณ', lv: [16, 99], icon: 'crown' },
   ];
+  const stages = stageDefs.map(st => ({
+    ...st,
+    lvLabel: st.lv[1] === 99 ? `${st.lv[0]}+` : `${st.lv[0]}-${st.lv[1]}`,
+    done: PET.level > st.lv[1],
+    cur: PET.level >= st.lv[0] && PET.level <= st.lv[1],
+  }));
   const foods = [
     { th: 'ผลเบอร์รี XP', amt: 12, cost: '+1 ตอบถูก', icon: 'spark', hue: 200 },
     { th: 'ขนมปังพลัง', amt: 30, cost: 'ส่งการบ้าน', icon: 'report', hue: 88 },
@@ -252,7 +264,7 @@ function PetSanctuary() {
                   <span className="tech" style={{ fontSize: 12, color: 'var(--cyan)' }}>{xp} / {PET.xpMax}</span>
                 </div>
                 <Bar value={xp} max={PET.xpMax} color={`oklch(0.78 0.17 ${PET.hue})`} height={12} glow />
-                <div className="tech" style={{ fontSize: 10.5, color: 'var(--muted)', marginTop: 6, textAlign: 'center', letterSpacing: '.06em' }}>วันนี้ทั้งห้องให้อาหารแล้ว {fed}/{CLASS.total} คน</div>
+                <div className="tech" style={{ fontSize: 10.5, color: 'var(--muted)', marginTop: 6, textAlign: 'center', letterSpacing: '.06em' }}>วันนี้ทั้งห้องให้อาหารแล้ว {fed}/{STUDENTS.length} คน</div>
               </div>
             </div>
           </div>
@@ -285,7 +297,7 @@ function PetSanctuary() {
                   border: `1px solid ${st.cur ? 'oklch(0.7 0.18 150)' : 'oklch(0.5 0.1 285 / .25)'}`, opacity: st.done || st.cur ? 1 : 0.5 }}>
                   <div className="center" style={{ width: 38, height: 38, borderRadius: '50%', background: st.cur ? `oklch(0.6 0.18 150)` : 'oklch(0.3 0.06 285)' }}><Icon name={st.icon} size={18} color="#fff" /></div>
                   <div className="display" style={{ fontSize: 12, color: '#fff', textAlign: 'center' }}>{st.th}</div>
-                  <div className="tech" style={{ fontSize: 9.5, color: 'var(--muted)' }}>Lv.{st.lv}</div>
+                  <div className="tech" style={{ fontSize: 9.5, color: 'var(--muted)' }}>Lv.{st.lvLabel}</div>
                   {st.cur && <span className="tech" style={{ position: 'absolute', top: 4, right: 6, fontSize: 8, color: 'oklch(0.85 0.16 150)' }}>NOW</span>}
                 </div>
               ))}
@@ -308,7 +320,7 @@ function PetSanctuary() {
                 {i === 0 && <span className="center" style={{ position: 'absolute', top: -8, left: '50%', transform: 'translateX(-50%)', width: 22, height: 22, borderRadius: '50%', background: 'var(--gold)' }}><Icon name="crown" size={13} color="#3a2800" /></span>}
               </div>
               <div className="display" style={{ fontSize: 12.5, color: '#fff' }}>{s.nick}</div>
-              <span className="row tech" style={{ gap: 3, fontSize: 11, color: 'var(--st-rose, oklch(0.7 0.16 350))' }}><Icon name="heart" size={11} color="oklch(0.72 0.16 350)" /> {30 - i * 4}</span>
+              <span className="row tech" style={{ gap: 3, fontSize: 11, color: 'var(--st-rose, oklch(0.7 0.16 350))' }}><Icon name="star" size={11} color="oklch(0.82 0.18 50)" /> {s.game.stars}</span>
             </div>
           ))}
         </div>
@@ -322,7 +334,14 @@ function PetSanctuary() {
    ============================================================ */
 function SeasonHub({ go }) {
   const { SEASON, SEASONS, SEASON_TRACK, QUESTS } = window.GC;
-  const pct = Math.round((SEASON.xp / SEASON.goal) * 100);
+  const [totals, setTotals] = React.useState(() => window.GC.getClassTotals());
+  React.useEffect(() => {
+    const h = () => setTotals(window.GC.getClassTotals());
+    window.addEventListener('gc:students-changed', h);
+    return () => window.removeEventListener('gc:students-changed', h);
+  }, []);
+  const liveXP = totals.classXP;
+  const pct = Math.round((liveXP / SEASON.goal) * 100);
 
   return (
     <div className="col stagger" style={{ gap: 18 }}>
@@ -337,7 +356,7 @@ function SeasonHub({ go }) {
           <div style={{ position: 'absolute', left: '8%', right: '8%', top: 19, height: 4, borderRadius: 99, background: 'oklch(0.3 0.05 285)' }} />
           <div style={{ position: 'absolute', left: '8%', top: 19, height: 4, borderRadius: 99, width: `${Math.min(84, (pct / 100) * 84)}%`, background: `linear-gradient(90deg, oklch(0.7 0.18 ${SEASON.hue}), var(--gold))`, boxShadow: `0 0 12px oklch(0.7 0.18 ${SEASON.hue})` }} />
           {SEASON_TRACK.map((m, i) => {
-            const reached = SEASON.xp >= m.at;
+            const reached = liveXP >= m.at;
             return (
               <div key={i} className="center col" style={{ gap: 8, position: 'relative', zIndex: 1 }}>
                 <div className="center" style={{ width: 42, height: 42, borderRadius: '50%', flex: 'none',
@@ -363,7 +382,12 @@ function SeasonHub({ go }) {
           <div className="tech" style={{ fontSize: 11, color: 'var(--muted)', letterSpacing: '.16em', marginBottom: 12 }}>// ภารกิจประจำฤดูกาล</div>
           <div className="col" style={{ gap: 10 }}>
             {QUESTS.season.map(q => {
-              const done = q.cur >= q.max;
+              const liveCur = q.id === 's1'
+                ? Math.round(totals.classXP / 500)
+                : q.id === 's3'
+                  ? Math.min(q.max, (window.GC.STUDENTS || []).filter(s => s.game.level >= 5).length)
+                  : q.cur;
+              const done = liveCur >= q.max;
               return (
                 <div key={q.id} className="row" style={{ gap: 12, padding: '11px 12px', clipPath: W2CLIP,
                   background: done ? 'color-mix(in oklch,var(--st-present) 14%,transparent)' : 'oklch(0.16 0.04 285 / .6)', border: `1px solid ${done ? 'color-mix(in oklch,var(--st-present) 35%,transparent)' : 'oklch(0.5 0.1 285 / .25)'}` }}>
@@ -372,7 +396,7 @@ function SeasonHub({ go }) {
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13.5, color: '#fff', fontWeight: 600 }}>{q.th}</div>
-                    <div style={{ marginTop: 5 }}><Bar value={q.cur} max={q.max} color={`oklch(0.7 0.16 ${SEASON.hue})`} height={6} /></div>
+                    <div style={{ marginTop: 5 }}><Bar value={liveCur} max={q.max} color={`oklch(0.7 0.16 ${SEASON.hue})`} height={6} /></div>
                   </div>
                   <span className="pill tech" style={{ fontSize: 10.5, background: 'color-mix(in oklch,var(--gold) 16%,transparent)', color: 'var(--gold)', flex: 'none' }}>
                     <Icon name={rewardIcon(q.reward)} size={12} color="var(--gold)" /> {rewardLabel(q.reward)}

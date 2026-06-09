@@ -184,20 +184,20 @@
   // ---- quests ----
   const QUESTS = {
     daily: [
-      { id: 'd1', th: 'มาเรียนตรงเวลา',        icon: 'clock',  cur: 1, max: 1, reward: { xp: 20 } },
-      { id: 'd2', th: 'ตอบคำถามในห้อง 3 ครั้ง',  icon: 'spark',  cur: 2, max: 3, reward: { xp: 30 } },
-      { id: 'd3', th: 'ช่วยเหลือเพื่อน',         icon: 'heart',  cur: 1, max: 1, reward: { star: 1 } },
+      { id: 'd1', th: 'มาเรียนตรงเวลา',        icon: 'clock',  cur: 0, max: 1, reward: { xp: 20 } },
+      { id: 'd2', th: 'ตอบคำถามในห้อง 3 ครั้ง',  icon: 'spark',  cur: 0, max: 3, reward: { xp: 30 } },
+      { id: 'd3', th: 'ช่วยเหลือเพื่อน',         icon: 'heart',  cur: 0, max: 1, reward: { star: 1 } },
       { id: 'd4', th: 'ส่งการบ้านครบ',          icon: 'report', cur: 0, max: 1, reward: { coin: 15 } },
     ],
     weekly: [
-      { id: 'w1', th: 'มาเรียนครบ 5 วัน',        icon: 'calendar', cur: 4, max: 5, reward: { xp: 120 } },
-      { id: 'w2', th: 'อ่านหนังสือ 3 เล่ม',       icon: 'book',     cur: 2, max: 3, reward: { star: 5 } },
-      { id: 'w3', th: 'สะสมแต้มกิจกรรม 200',      icon: 'bolt',     cur: 150, max: 200, reward: { coin: 80 } },
+      { id: 'w1', th: 'มาเรียนครบ 5 วัน',        icon: 'calendar', cur: 0, max: 5, reward: { xp: 120 } },
+      { id: 'w2', th: 'อ่านหนังสือ 3 เล่ม',       icon: 'book',     cur: 0, max: 3, reward: { star: 5 } },
+      { id: 'w3', th: 'สะสมแต้มกิจกรรม 200',      icon: 'bolt',     cur: 0, max: 200, reward: { coin: 80 } },
     ],
     season: [
-      { id: 's1', th: 'พิชิตดินแดนคณิต 100%',     icon: 'calc',   cur: 64, max: 100, reward: { xp: 500 } },
+      { id: 's1', th: 'พิชิตดินแดนคณิต 100%',     icon: 'calc',   cur: 0, max: 100, reward: { xp: 500 } },
       { id: 's2', th: 'ปราบบอสคณิตทั้งห้อง',      icon: 'shield', cur: 0, max: 1, reward: { badge: 'ตราปราบบอส' } },
-      { id: 's3', th: 'มีสมาชิกขึ้น Hall of Fame', icon: 'trophy', cur: 1, max: 3, reward: { badge: 'ตราเกียรติยศ' } },
+      { id: 's3', th: 'มีสมาชิกขึ้น Hall of Fame', icon: 'trophy', cur: 0, max: 3, reward: { badge: 'ตราเกียรติยศ' } },
     ],
   };
 
