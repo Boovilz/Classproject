@@ -7,7 +7,7 @@
  *  HOT POTATO  (ระเบิดเวลา)
  * ---------------------------------------------------------- */
 function HotPotato() {
-  const { STUDENTS } = window.GC;
+  const STUDENTS = useStudents();
   const n = STUDENTS.length;
   const [idx, setIdx] = React.useState(0);
   const [running, setRunning] = React.useState(false);
@@ -101,7 +101,7 @@ function HotPotato() {
 const LADDER_PRIZES = ['+15 XP', 'ตอบคำถาม', 'ผู้ช่วยครู', 'เลือกเพลง', 'พักดื่มน้ำ', '+1 ดาว', 'นำสวดมนต์', 'เปิดประตู'];
 
 function LadderChallenge() {
-  const { STUDENTS } = window.GC;
+  const STUDENTS = useStudents();
   const [count, setCount] = React.useState(5);
   const [seed, setSeed] = React.useState(0);
   const W = 620, H = 380, ROWS = 9;
@@ -231,8 +231,8 @@ function LadderChallenge() {
  *  CARD DRAW  (สุ่มการ์ด) — 3D flip deck
  * ---------------------------------------------------------- */
 function CardDraw() {
-  const { STUDENTS } = window.GC;
-  const [deck, setDeck] = React.useState(() => [...STUDENTS].sort(() => Math.random() - 0.5));
+  const STUDENTS = useStudents();
+  const [deck, setDeck] = React.useState(() => [...window.GC.getStudents()].sort(() => Math.random() - 0.5));
   const [flipped, setFlipped] = React.useState({});
   const [drawnCount, setDrawnCount] = React.useState(0);
   const [last, setLast] = React.useState(null);
@@ -305,7 +305,7 @@ function CardDraw() {
  *  BOSS BATTLE  (บอสไฟต์) — whole-class HP battle
  * ---------------------------------------------------------- */
 function BossBattle() {
-  const { STUDENTS } = window.GC;
+  const STUDENTS = useStudents();
   const MAX = 5000;
   const [hp, setHp] = React.useState(MAX);
   const [hits, setHits] = React.useState([]);     // floating damage {id,x,val,crit}

@@ -170,8 +170,9 @@ function TeacherDashboard({ openStudent }) {
     window.addEventListener('gc:class-changed', r);
     return () => window.removeEventListener('gc:class-changed', r);
   }, []);
-  const { STUDENTS, STATUSES, WEEK_TREND } = window.GC;
-  const CLASS = { ...cls, total: window.GC.getStudents().length, summary: window.GC.CLASS.summary, welfare: window.GC.CLASS.welfare };
+  const STUDENTS = useStudents();
+  const { STATUSES, WEEK_TREND } = window.GC;
+  const CLASS = { ...cls, total: STUDENTS.length, summary: window.GC.CLASS.summary, welfare: window.GC.CLASS.welfare };
   const s = CLASS.summary;
   const presentPct = Math.round((s.present / CLASS.total) * 100);
   const alerts = STUDENTS.filter(st => st.health.nutrition !== 'สมส่วน' || st.status === 'sick' || st.status === 'absent');

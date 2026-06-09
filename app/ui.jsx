@@ -187,4 +187,15 @@ function LineChart({ data, w = 520, h = 180, color, color2, series2, yLabel, pad
   );
 }
 
-Object.assign(window, { Icon, HeroAvatar, Stat, Bar, RankBadge, LineChart });
+/* reactive hook — returns live student list, re-renders on add/delete/edit */
+function useStudents() {
+  const [students, setStudents] = React.useState(() => window.GC.getStudents());
+  React.useEffect(() => {
+    const refresh = () => setStudents(window.GC.getStudents());
+    window.addEventListener('gc:students-changed', refresh);
+    return () => window.removeEventListener('gc:students-changed', refresh);
+  }, []);
+  return students;
+}
+
+Object.assign(window, { Icon, HeroAvatar, Stat, Bar, RankBadge, LineChart, useStudents });

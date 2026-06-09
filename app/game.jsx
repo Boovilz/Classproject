@@ -107,7 +107,7 @@ function CompactAvatarCard({ s, rank, onClick }) {
 }
 
 function GameHome({ openStudent }) {
-  const { STUDENTS } = window.GC;
+  const STUDENTS = useStudents();
   const ranked = [...STUDENTS].sort((a, b) => (b.game.level * 1000 + b.game.xp) - (a.game.level * 1000 + a.game.xp));
   const mvp = ranked[0];
   const classXP = STUDENTS.reduce((a, s) => a + s.game.level * 1000 + s.game.xp, 0);

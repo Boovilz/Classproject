@@ -2,13 +2,23 @@
    TEACHER — Attendance + Welfare table (interactive)
    ============================================================ */
 function Attendance({ openStudent }) {
-  const { STUDENTS, STATUSES, CLASS } = window.GC;
+  const STUDENTS = useStudents();
+  const { STATUSES, CLASS } = window.GC;
   const order = ['present', 'late', 'sick', 'leave', 'activity', 'absent'];
   const [rows, setRows] = React.useState(() => STUDENTS.map(s => ({
     id: s.id, status: s.status, milk: s.welfare.milk, brush: s.welfare.brush, lunch: s.welfare.lunch,
   })));
-  const [picker, setPicker] = React.useState(null); // student id with open status menu
+  const [picker, setPicker] = React.useState(null);
   const [dayIdx, setDayIdx] = React.useState(4);
+
+  React.useEffect(() => {
+    setRows(prev => {
+      const prevMap = Object.fromEntries(prev.map(r => [r.id, r]));
+      return STUDENTS.map(s => prevMap[s.id] || {
+        id: s.id, status: s.status, milk: s.welfare.milk, brush: s.welfare.brush, lunch: s.welfare.lunch,
+      });
+    });
+  }, [STUDENTS]);
 
   const setStatus = (id, status) => { setRows(r => r.map(x => x.id === id ? { ...x, status } : x)); setPicker(null); };
   const toggle = (id, key) => setRows(r => r.map(x => x.id === id ? { ...x, [key]: !x[key] } : x));

@@ -2,7 +2,8 @@
    STUDENT PROFILE — full avatar card detail (overlay)
    ============================================================ */
 function StudentProfile({ studentId, onClose, openStudent }) {
-  const { STUDENTS, SUBJECTS, STATUSES, RANKS } = window.GC;
+  const STUDENTS = useStudents();
+  const { SUBJECTS, STATUSES, RANKS } = window.GC;
   const s = STUDENTS.find(x => x.id === studentId);
   if (!s) return null;
   const r = RANKS[s.game.rankIdx];

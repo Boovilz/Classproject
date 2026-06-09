@@ -96,7 +96,7 @@ function ClassTimer() {
 }
 
 function GroupGen() {
-  const { STUDENTS } = window.GC;
+  const STUDENTS = useStudents();
   const [groups, setGroups] = React.useState(4);
   const [result, setResult] = React.useState(null);
   const gen = () => {
@@ -161,8 +161,16 @@ function ClassroomTools() {
 }
 
 function StatusBoard({ openStudent }) {
-  const { STUDENTS, LIVE } = window.GC;
+  const STUDENTS = useStudents();
+  const { LIVE } = window.GC;
   const [states, setStates] = React.useState(() => Object.fromEntries(STUDENTS.map(s => [s.id, s.live])));
+
+  React.useEffect(() => {
+    setStates(prev => {
+      const next = Object.fromEntries(STUDENTS.map(s => [s.id, s.live]));
+      return { ...next, ...Object.fromEntries(Object.entries(prev).filter(([id]) => next[id])) };
+    });
+  }, [STUDENTS]);
   const cycle = (id) => {
     const keys = Object.keys(LIVE);
     setStates(st => { const i = keys.indexOf(st[id]); return { ...st, [id]: keys[(i + 1) % keys.length] }; });

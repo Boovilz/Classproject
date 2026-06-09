@@ -2,7 +2,7 @@
    GAME — Mini-games hub + working Wheel Spinner
    ============================================================ */
 function WheelSpinner({ openStudent }) {
-  const { STUDENTS } = window.GC;
+  const STUDENTS = useStudents();
   const items = STUDENTS;
   const n = items.length;
   const seg = 360 / n;

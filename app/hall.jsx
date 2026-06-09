@@ -2,7 +2,8 @@
    HALL OF FAME  +  STUDENT GUILD
    ============================================================ */
 function HallOfFame({ openStudent }) {
-  const { STUDENTS, ACHIEVEMENTS } = window.GC;
+  const STUDENTS = useStudents();
+  const { ACHIEVEMENTS } = window.GC;
   const ranked = [...STUDENTS].sort((a, b) => (b.game.level * 1000 + b.game.xp) - (a.game.level * 1000 + a.game.xp));
   const podium = [ranked[1], ranked[0], ranked[2]];   // 2nd, 1st, 3rd
   const heights = [128, 168, 104];
@@ -79,7 +80,8 @@ function HallOfFame({ openStudent }) {
 }
 
 function StudentGuild({ openStudent }) {
-  const { STUDENTS, CLASS, CLASS_LEVEL } = window.GC;
+  const STUDENTS = useStudents();
+  const { CLASS, CLASS_LEVEL } = window.GC;
   const ranked = [...STUDENTS].sort((a, b) => (b.game.level * 1000 + b.game.xp) - (a.game.level * 1000 + a.game.xp));
   const totalStars = STUDENTS.reduce((a, s) => a + s.game.stars, 0);
   const [sort, setSort] = React.useState('power');
