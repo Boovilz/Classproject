@@ -216,4 +216,15 @@ function useStudents() {
   return students;
 }
 
-Object.assign(window, { Icon, HeroAvatar, Stat, Bar, RankBadge, LineChart, useStudents });
+/* QR code box — renders a QR encoding `value` onto a canvas */
+function QRCodeBox({ value, size = 120, style }) {
+  const ref = React.useRef(null);
+  React.useEffect(() => {
+    if (ref.current && window.QRCode) {
+      window.QRCode.toCanvas(ref.current, value, { width: size, margin: 1, color: { dark: '#1a1430', light: '#ffffff' } }, () => {});
+    }
+  }, [value, size]);
+  return <canvas ref={ref} width={size} height={size} style={{ borderRadius: 8, ...style }} />;
+}
+
+Object.assign(window, { Icon, HeroAvatar, Stat, Bar, RankBadge, LineChart, useStudents, QRCodeBox });

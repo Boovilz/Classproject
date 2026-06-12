@@ -183,6 +183,17 @@ function StudentProfile({ studentId, onClose, openStudent }) {
             </div>
           </div>
 
+          {/* QR code — record / check-in */}
+          <div className="row glass-2" style={{ marginTop: 22, padding: 16, borderRadius: 'var(--r-md)', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
+            <QRCodeBox value={`${location.origin}${location.pathname}?portal=${s.id}`} size={92} />
+            <div style={{ flex: 1, minWidth: 160 }}>
+              <h4 style={{ fontSize: 14, color: '#fff', marginBottom: 4 }}>QR Code บันทึกข้อมูลนักเรียน</h4>
+              <div style={{ fontSize: 12, color: 'var(--muted)', lineHeight: 1.5 }}>
+                สแกนเพื่อเปิดหน้าข้อมูล ({s.nick} · เลขที่ {s.no}) — ใช้สำหรับเช็คชื่อ/บันทึกคะแนนผ่านมือถือของนักเรียนเอง
+              </div>
+            </div>
+          </div>
+
           {/* actions */}
           <div className="col" style={{ gap: 12, marginTop: 24 }}>
             <div className="row" style={{ gap: 10, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
