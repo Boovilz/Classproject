@@ -151,6 +151,39 @@ h1,h2,h3,h4 { font-family: var(--font-display); font-weight: 700; line-height: 1
 .kingdom-grid { display: grid; grid-template-columns: minmax(0,1fr) 340px; gap: 16px; align-items: stretch; }
 @media (max-width: 1080px) { .kingdom-grid { grid-template-columns: minmax(0,1fr); } }
 
+/* ============================================================
+   GLOBAL RESPONSIVE FIXES — sidebar + header overflow on mobile
+   Every page is built from the same <aside> (sidebar menu) and
+   <header class="row"> (top bar) shells, defined inline with
+   fixed pixel widths (e.g. width:250 / width:92 / width:240).
+   `!important` here is needed to win over those inline styles
+   without having to touch every page file individually.
+   ============================================================ */
+@media (max-width: 860px) {
+  /* shrink the sidebar to an icon-only rail so it never pushes
+     the main content off-screen */
+  aside { width: 72px !important; padding-left: 4px !important; padding-right: 4px !important; }
+  /* hide text labels inside the sidebar (icons stay visible) */
+  aside span:not(.dot) { display: none !important; }
+  aside button { width: 56px !important; }
+
+  /* let the top header wrap onto a second line instead of
+     overflowing horizontally, and tighten its padding */
+  header.row { flex-wrap: wrap !important; padding: 10px 14px !important; row-gap: 8px; }
+  header.row > div { min-width: 0; }
+  /* search box and similar fixed-width controls become fluid */
+  header [style*="width: 240"] { width: 100% !important; max-width: none !important; }
+
+  main.scroll { padding: 16px 14px 80px !important; }
+}
+
+@media (max-width: 520px) {
+  /* on very small phones drop the sidebar labels entirely and
+     squeeze the rail further */
+  aside { width: 60px !important; }
+  aside button { width: 48px !important; height: 50px !important; }
+}
+
 /* buttons */
 .btn {
   font-family: var(--font-display); font-weight: 600;
