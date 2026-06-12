@@ -139,12 +139,17 @@ body {
 .tech { font-family: var(--font-tech); }
 h1,h2,h3,h4 { font-family: var(--font-display); font-weight: 700; line-height: 1.08; }
 
-/* scrollbars */
-.scroll { overflow-y: auto; scrollbar-width: thin; }
+/* scrollbars
+   min-height:0 + -webkit-overflow-scrolling are required here:
+   as flex children, these elements default to min-height:auto,
+   which lets their content grow taller than the flex parent.
+   The parent (overflow:hidden) then clips the overflow instead
+   of letting it scroll inside .scroll/.scroll-thin. */
+.scroll { overflow-y: auto; scrollbar-width: thin; min-height: 0; -webkit-overflow-scrolling: touch; }
 .scroll::-webkit-scrollbar { width: 9px; height: 9px; }
 .scroll::-webkit-scrollbar-thumb { background: var(--line); border-radius: 99px; }
 .scroll::-webkit-scrollbar-thumb:hover { background: var(--muted); }
-.scroll-thin { overflow-y: auto; scrollbar-width: none; }
+.scroll-thin { overflow-y: auto; scrollbar-width: none; min-height: 0; -webkit-overflow-scrolling: touch; }
 .scroll-thin::-webkit-scrollbar { width: 0; height: 0; }
 
 /* responsive: kingdom hub collapses its side rail on narrow viewports */
