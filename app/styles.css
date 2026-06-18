@@ -31,34 +31,37 @@
   --rk-diamond:  oklch(0.80 0.14 230);
   --rk-master:   oklch(0.66 0.22 315);
 
-  /* Teacher Classroom OS brand palette — royal blue / emerald / orange */
-  --royal:     oklch(0.50 0.16 258);
-  --royal-2:   oklch(0.40 0.16 262);
-  --emerald:   oklch(0.62 0.135 155);
-  --emerald-2: oklch(0.50 0.135 155);
-  --orange:    oklch(0.70 0.17 50);
-  --orange-2:  oklch(0.60 0.17 45);
+  /* Teacher Classroom OS brand palette — royal blue / emerald / orange
+     (calmed/desaturated for the Liquid Glass treatment — hue & lightness
+     preserved, chroma lowered) */
+  --royal:     oklch(0.52 0.09 258);
+  --royal-2:   oklch(0.42 0.09 262);
+  --emerald:   oklch(0.64 0.075 155);
+  --emerald-2: oklch(0.52 0.075 155);
+  --orange:    oklch(0.72 0.095 50);
+  --orange-2:  oklch(0.62 0.095 45);
 }
 
-/* ---------- TEACHER WORLD (light) ---------- */
+/* ---------- TEACHER WORLD (light / Liquid Glass) ---------- */
 [data-world="teacher"] {
-  --bg:        oklch(0.975 0.006 250);
-  --bg-2:      oklch(0.955 0.010 250);
-  --surface:   rgba(255,255,255,0.72);
-  --surface-2: rgba(255,255,255,0.55);
+  --bg:        oklch(0.975 0.004 250);
+  --bg-2:      oklch(0.955 0.006 250);
+  --surface:   rgba(255,255,255,0.60);
+  --surface-2: rgba(255,255,255,0.42);
   --surface-solid: oklch(1 0 0);
-  --ink:       oklch(0.27 0.035 258);
-  --ink-soft:  oklch(0.46 0.03 258);
-  --muted:     oklch(0.58 0.022 258);
-  --line:      oklch(0.90 0.012 258);
-  --line-soft: oklch(0.93 0.008 258);
-  --navy:      oklch(0.45 0.12 258);
-  --navy-2:    oklch(0.36 0.13 262);
-  --navy-ink:  oklch(0.30 0.10 260);
-  --accent:    oklch(0.66 0.14 230);
-  --glass-border: rgba(255,255,255,0.85);
-  --glass-shadow: 0 18px 48px -22px rgba(30,42,90,0.42);
-  --halo: rgba(80,110,220,0.10);
+  --ink:       oklch(0.27 0.020 258);
+  --ink-soft:  oklch(0.46 0.018 258);
+  --muted:     oklch(0.58 0.014 258);
+  --line:      oklch(0.91 0.008 258);
+  --line-soft: oklch(0.94 0.005 258);
+  --navy:      oklch(0.47 0.07 258);
+  --navy-2:    oklch(0.38 0.07 262);
+  --navy-ink:  oklch(0.32 0.055 260);
+  --accent:    oklch(0.68 0.08 230);
+  --glass-border: rgba(255,255,255,0.55);
+  --glass-shadow: 0 24px 64px -30px rgba(30,42,90,0.22);
+  --glass-spec: rgba(255,255,255,0.65);
+  --halo: rgba(80,110,220,0.07);
   color-scheme: light;
 }
 
@@ -117,8 +120,8 @@ body {
 }
 [data-world="teacher"].world::before {
   background:
-    radial-gradient(60% 50% at 12% 8%, rgba(90,120,230,0.10), transparent 60%),
-    radial-gradient(50% 50% at 92% 0%, rgba(110,170,240,0.10), transparent 55%);
+    radial-gradient(60% 50% at 12% 8%, rgba(90,120,230,0.06), transparent 60%),
+    radial-gradient(50% 50% at 92% 0%, rgba(110,170,240,0.05), transparent 55%);
 }
 [data-world="game"].world::before {
   background:
@@ -140,6 +143,24 @@ body {
   backdrop-filter: blur(calc(var(--glass-blur) * 0.7)) saturate(1.1);
   -webkit-backdrop-filter: blur(calc(var(--glass-blur) * 0.7)) saturate(1.1);
   border: 1px solid var(--line);
+}
+
+/* Liquid Glass treatment — Teacher World only: lighter/more translucent
+   material, thin hairline border, soft diffused shadow + an inset
+   specular highlight along the top edge for a "glass" sheen. */
+[data-world="teacher"] .glass {
+  background: linear-gradient(165deg, rgba(255,255,255,0.66), rgba(255,255,255,0.34));
+  backdrop-filter: blur(24px) saturate(1.5);
+  -webkit-backdrop-filter: blur(24px) saturate(1.5);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 1px 0 var(--glass-spec) inset, var(--glass-shadow);
+}
+[data-world="teacher"] .glass-2 {
+  background: linear-gradient(165deg, rgba(255,255,255,0.48), rgba(255,255,255,0.22));
+  backdrop-filter: blur(18px) saturate(1.35);
+  -webkit-backdrop-filter: blur(18px) saturate(1.35);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 1px 0 var(--glass-spec) inset;
 }
 
 /* fonts / headings */
@@ -217,6 +238,17 @@ h1,h2,h3,h4 { font-family: var(--font-display); font-weight: 700; line-height: 1
   background: linear-gradient(120deg, var(--neon), var(--purple));
   box-shadow: 0 0 0 1px rgba(180,150,255,0.3), 0 14px 36px -10px var(--halo);
 }
+[data-world="teacher"] .btn-primary {
+  background: linear-gradient(165deg, var(--navy), var(--navy-2));
+  box-shadow: 0 1px 0 rgba(255,255,255,0.3) inset, 0 10px 26px -14px var(--navy);
+}
+[data-world="teacher"] .btn-ghost {
+  background: rgba(255,255,255,0.55);
+  backdrop-filter: blur(14px) saturate(1.3);
+  -webkit-backdrop-filter: blur(14px) saturate(1.3);
+  border: 1px solid var(--glass-border);
+}
+[data-world="teacher"] .btn-ghost:hover { background: rgba(255,255,255,0.75); }
 .btn-neon {
   background: linear-gradient(120deg, var(--cyan), var(--neon));
   color: #0a0a14; font-weight: 700;
