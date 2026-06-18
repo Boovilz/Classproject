@@ -922,6 +922,23 @@
     ];
   }
 
+  // ---- generic CSV export: builds a CSV string from headers+rows and triggers a browser download ----
+  function exportCSV(filename, headers, rows) {
+    function esc(v) {
+      const s = v == null ? '' : String(v);
+      return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+    }
+    const lines = [headers.map(esc).join(',')].concat(rows.map(function(r) { return r.map(esc).join(','); }));
+    const csv = '﻿' + lines.join('\r\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   window.GC = {
     STATUSES, PRESENT_LIKE, LIVE, RANKS, TIERS, tierOf, SUBJECTS, REWARDS,
     STUDENTS, CLASS, WEEK_TREND,
@@ -950,5 +967,6 @@
     getAnnouncements, addAnnouncement, getHomework, addHomework,
     getHomeworkAssignments, addHomeworkAssignment, deleteHomeworkAssignment,
     getHomeworkSubmissions, saveHomeworkSubmissions,
+    exportCSV,
   };
 })();

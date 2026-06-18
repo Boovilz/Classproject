@@ -462,6 +462,11 @@ function PrintBarcodesModal({ onClose }) {
     a.click();
   }
 
+  function exportCSV() {
+    const rows = STUDENTS.map(s => [String(s.no).padStart(2, '0'), s.name, s.nick, s.code || '']);
+    window.GC.exportCSV('บาร์โค้ดนักเรียน.csv', ['เลขที่', 'ชื่อ', 'ชื่อเล่น', 'เลขประจำตัว'], rows);
+  }
+
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 500, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
@@ -480,6 +485,9 @@ function PrintBarcodesModal({ onClose }) {
             <div style={{ fontSize: 12, color: '#777' }}>พิมพ์แล้วตัดติดสมุดหรือใบงาน เพื่อใช้สแกนเช็คชื่อ/ตรวจการบ้าน</div>
           </div>
           <div className="row" style={{ gap: 10 }}>
+            <button onClick={exportCSV} className="btn btn-ghost">
+              <Icon name="download" size={15} /> CSV
+            </button>
             <button onClick={() => window.print()} className="btn" style={{ background: 'linear-gradient(120deg,var(--navy),var(--navy-2))', color: '#fff' }}>
               <Icon name="download" size={15} color="#fff" /> พิมพ์ทั้งหมด
             </button>
@@ -513,6 +521,7 @@ function StudentsGrid({ openStudent }) {
   const [editStudent, setEditStudent] = React.useState(null);
   const [confirmDel, setConfirmDel] = React.useState(null);
   const [showBarcodes, setShowBarcodes] = React.useState(false);
+  const [showPrint, setShowPrint] = React.useState(false);
 
   React.useEffect(() => {
     const refresh = () => setStudents(getStudents());
@@ -536,6 +545,18 @@ function StudentsGrid({ openStudent }) {
 
   const TABS = [['all','ทั้งหมด'],['present','มาเรียน'],['watch','ติดตาม']];
 
+  // exportable full roster — shared by CSV + PDF
+  const exportColumns = ['เลขที่', 'ชื่อ', 'ชื่อเล่น', 'เลขประจำตัว', 'สถานะ', 'เลเวล', 'BMI'];
+  function buildExportRows() {
+    return filtered.map(s => [
+      String(s.no).padStart(2, '0'), s.name, s.nick, s.code || '',
+      (STATUSES[s.status] || STATUSES['present']).th, s.game.level, s.health.bmi,
+    ]);
+  }
+  function exportCSV() {
+    window.GC.exportCSV('รายชื่อนักเรียน.csv', exportColumns, buildExportRows());
+  }
+
   return (
     <>
       <div className="col" style={{ gap: 16 }}>
@@ -550,6 +571,12 @@ function StudentsGrid({ openStudent }) {
           <div className="row" style={{ gap: 10 }}>
             <button onClick={() => setShowBarcodes(true)} className="btn" style={{ fontSize: 13.5, background: 'var(--surface-2)', color: 'var(--ink-soft)' }}>
               <Icon name="report" size={16} /> พิมพ์บาร์โค้ด 🔲
+            </button>
+            <button onClick={exportCSV} className="btn" style={{ fontSize: 13.5, background: 'var(--surface-2)', color: 'var(--ink-soft)' }}>
+              <Icon name="download" size={16} /> CSV
+            </button>
+            <button onClick={() => setShowPrint(true)} className="btn" style={{ fontSize: 13.5, background: 'var(--surface-2)', color: 'var(--ink-soft)' }}>
+              <Icon name="download" size={16} /> PDF
             </button>
             <button onClick={() => setShowAdd(true)} className="btn" style={{ fontSize: 13.5, background: 'linear-gradient(120deg,var(--navy),var(--navy-2))', color: '#fff' }}>
               <Icon name="plus" size={17} /> เพิ่มนักเรียน
@@ -598,6 +625,14 @@ function StudentsGrid({ openStudent }) {
       {editStudent && <EditStudentModal student={editStudent} onClose={() => setEditStudent(null)} />}
       {showAdd && <AddStudentModal onClose={() => setShowAdd(false)} />}
       {showBarcodes && <PrintBarcodesModal onClose={() => setShowBarcodes(false)} />}
+      {showPrint && (
+        <PrintTableModal
+          title="รายชื่อนักเรียนทั้งหมด"
+          subtitle={`ทั้งหมด ${students.length} คน · แสดง ${filtered.length} คน`}
+          columns={exportColumns}
+          rows={buildExportRows()}
+          onClose={() => setShowPrint(false)} />
+      )}
 
       {confirmDel && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 400, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

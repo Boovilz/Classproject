@@ -27,6 +27,7 @@ function Attendance({ openStudent }) {
   const [dirty, setDirty] = React.useState(false);
   const [showBarcode, setShowBarcode] = React.useState(false);
   const [showScanAttend, setShowScanAttend] = React.useState(false);
+  const [showPrint, setShowPrint] = React.useState(false);
   const [awardRow, setAwardRow] = React.useState(null); // student id
   const [awardType, setAwardType] = React.useState('xp');
   const [awardAmt, setAwardAmt] = React.useState(10);
@@ -84,6 +85,23 @@ function Attendance({ openStudent }) {
 
   const student = id => STUDENTS.find(s => s.id === id);
   const counts = order.map(k => [k, rows.filter(r => r.status === k).length]);
+
+  // build the exportable roster for the selected date — shared by CSV + PDF
+  const exportColumns = ['เลขที่', 'ชื่อ', 'ชื่อเล่น', 'เลขประจำตัว', 'สถานะ', 'ดื่มนม', 'แปรงฟัน', 'อาหารกลางวัน'];
+  function buildExportRows() {
+    return rows.map(r => {
+      const st = student(r.id);
+      if (!st) return null;
+      return [
+        String(st.no).padStart(2, '0'), st.name, st.nick, st.code || '',
+        STATUSES[r.status]?.th || r.status,
+        r.milk ? 'ใช่' : '', r.brush ? 'ใช่' : '', r.lunch ? 'ใช่' : '',
+      ];
+    }).filter(Boolean);
+  }
+  function exportCSV() {
+    window.GC.exportCSV(`เช็คชื่อ-${selDate}.csv`, exportColumns, buildExportRows());
+  }
 
   // jump to any date (past or future within the school year) — enables backdated edits
   function jumpToDate(dateStr) {
@@ -217,6 +235,12 @@ function Attendance({ openStudent }) {
                 color: showScanAttend ? '#fff' : 'var(--ink-soft)' }}>
               <Icon name="report" size={15} color={showScanAttend ? '#fff' : 'var(--ink-soft)'} />
               {showScanAttend ? 'ซ่อนสแกนเข้าเรียน' : 'สแกนเข้าเรียน 🔲'}
+            </button>
+            <button onClick={exportCSV} className="btn btn-ghost" style={{ padding: '7px 14px', fontSize: 12.5 }}>
+              <Icon name="download" size={15} /> CSV
+            </button>
+            <button onClick={() => setShowPrint(true)} className="btn btn-ghost" style={{ padding: '7px 14px', fontSize: 12.5 }}>
+              <Icon name="download" size={15} /> PDF
             </button>
           </div>
 
@@ -356,6 +380,15 @@ function Attendance({ openStudent }) {
       <p style={{ fontSize: 12.5, color: 'var(--muted)', textAlign: 'center' }}>
         แตะสถานะเพื่อแก้ไข · เลือกวันที่ในปฏิทินด้านบนเพื่อบันทึกหรือแก้ไขข้อมูลย้อนหลัง
       </p>
+
+      {showPrint && (
+        <PrintTableModal
+          title="รายงานการเช็คชื่อ"
+          subtitle={selDateObj.toLocaleDateString('th-TH', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+          columns={exportColumns}
+          rows={buildExportRows()}
+          onClose={() => setShowPrint(false)} />
+      )}
     </div>
   );
 }

@@ -301,4 +301,52 @@ function BarcodeRecordBar({ onScan, hint, autoFocus = true }) {
   );
 }
 
-Object.assign(window, { Icon, HeroAvatar, Stat, Bar, RankBadge, LineChart, useStudents, QRCodeBox, BarcodeRecordBar, StudentBarcode });
+/* reusable print-friendly table modal — used by Export PDF buttons across
+   attendance / homework / student-roster pages. Isolates #print-table-sheet
+   from the rest of the page chrome (sidebar/topbar) under @media print, then
+   window.print() lets the browser's "Save as PDF" produce the PDF. */
+function PrintTableModal({ title, subtitle, columns, rows, onClose }) {
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 500, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <style>{`
+        @media print {
+          body * { visibility: hidden; }
+          #print-table-sheet, #print-table-sheet * { visibility: visible; }
+          #print-table-sheet { position: fixed; inset: 0; max-height: none; background: #fff; }
+          #print-table-toolbar { display: none !important; }
+        }
+      `}</style>
+      <div id="print-table-sheet" className="col" style={{ borderRadius: 'var(--r-xl)', padding: 24, gap: 16, width: '92vw', maxWidth: 900, maxHeight: '88vh', overflowY: 'auto', background: '#fff', boxShadow: '0 20px 60px -20px rgba(0,0,0,.5)' }}>
+        <div id="print-table-toolbar" className="row" style={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+          <div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: '#1a1430' }}>{title}</div>
+            {subtitle && <div style={{ fontSize: 12, color: '#777' }}>{subtitle}</div>}
+          </div>
+          <div className="row" style={{ gap: 10 }}>
+            <button onClick={() => window.print()} className="btn" style={{ background: 'linear-gradient(120deg,var(--navy),var(--navy-2))', color: '#fff' }}>
+              <Icon name="download" size={15} color="#fff" /> พิมพ์ PDF
+            </button>
+            <button onClick={onClose} className="btn btn-ghost">ปิด</button>
+          </div>
+        </div>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, color: '#1a1430' }}>
+          <thead>
+            <tr>
+              {columns.map(c => <th key={c} style={{ textAlign: 'left', padding: '8px 10px', borderBottom: '2px solid #ddd', fontSize: 12, color: '#555' }}>{c}</th>)}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r, i) => (
+              <tr key={i} style={{ background: i % 2 ? '#fafafa' : '#fff' }}>
+                {r.map((cell, j) => <td key={j} style={{ padding: '7px 10px', borderBottom: '1px solid #eee' }}>{cell}</td>)}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+Object.assign(window, { Icon, HeroAvatar, Stat, Bar, RankBadge, LineChart, useStudents, QRCodeBox, BarcodeRecordBar, StudentBarcode, PrintTableModal });

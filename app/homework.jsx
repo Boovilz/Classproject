@@ -65,6 +65,7 @@ function HomeworkTracking({ openStudent }) {
   const [showAdd, setShowAdd] = React.useState(false);
   const [showScan, setShowScan] = React.useState(false);
   const [scanToast, setScanToast] = React.useState(null);
+  const [showPrint, setShowPrint] = React.useState(false);
 
   React.useEffect(() => {
     const refresh = () => {
@@ -117,6 +118,20 @@ function HomeworkTracking({ openStudent }) {
 
   const submittedCount = rows.filter(r => r.submitted).length;
   const pct = rows.length ? Math.round((submittedCount / rows.length) * 100) : 0;
+
+  // build the exportable submission roster for the selected assignment — shared by CSV + PDF
+  const exportColumns = ['เลขที่', 'ชื่อ', 'ชื่อเล่น', 'เลขประจำตัว', 'สถานะการส่ง'];
+  function buildExportRows() {
+    return rows.map(r => {
+      const s = student(r.id);
+      if (!s) return null;
+      return [String(s.no).padStart(2, '0'), s.name, s.nick, s.code || '', r.submitted ? 'ส่งแล้ว' : 'ยังไม่ส่ง'];
+    }).filter(Boolean);
+  }
+  function exportCSV() {
+    if (!selected) return;
+    window.GC.exportCSV(`การบ้าน-${selected.title}-${selected.date}.csv`, exportColumns, buildExportRows());
+  }
 
   return (
     <div className="col" style={{ gap: 18 }}>
@@ -200,6 +215,12 @@ function HomeworkTracking({ openStudent }) {
               <Icon name="report" size={15} color={showScan ? '#fff' : 'var(--ink-soft)'} />
               {showScan ? 'ซ่อนสแกน' : 'สแกนส่งงาน 🔲'}
             </button>
+            <button onClick={exportCSV} className="btn btn-ghost" style={{ padding: '7px 14px', fontSize: 12.5 }}>
+              <Icon name="download" size={15} /> CSV
+            </button>
+            <button onClick={() => setShowPrint(true)} className="btn btn-ghost" style={{ padding: '7px 14px', fontSize: 12.5 }}>
+              <Icon name="download" size={15} /> PDF
+            </button>
           </div>
 
           {/* scan-to-submit panel — scanning a student's เลขประจำตัวนักเรียน
@@ -256,6 +277,15 @@ function HomeworkTracking({ openStudent }) {
             </div>
           </div>
           <p style={{ fontSize: 12.5, color: 'var(--muted)', textAlign: 'center' }}>แตะปุ่มสถานะเพื่อสลับว่าส่งแล้วหรือยังไม่ส่ง</p>
+
+          {showPrint && (
+            <PrintTableModal
+              title={`รายงานการส่งการบ้าน — ${selected.title}`}
+              subtitle={`${selected.subject} · ${selected.score} คะแนน · กำหนดส่ง ${selected.date}`}
+              columns={exportColumns}
+              rows={buildExportRows()}
+              onClose={() => setShowPrint(false)} />
+          )}
         </React.Fragment>
       )}
 
