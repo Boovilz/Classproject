@@ -1,6 +1,11 @@
 /* ============================================================
-   GAMIFIED CLASSROOM OS — Mock data (Thai classroom ป.4/2)
-   Attached to window for cross-file access.
+   GAMIFIED CLASSROOM OS — data layer
+   Static config + seed data stay local. Everything a teacher edits
+   (roster, attendance, homework, finance, announcements, ...) is
+   backed by Supabase (Postgres + Realtime) so it is shared across
+   every device, not just one browser's localStorage.
+   Attached to window for cross-file access — same window.GC shape
+   as before, so no page/component needs to change.
    ============================================================ */
 (function () {
   // ---- attendance statuses ----
@@ -73,7 +78,7 @@
     { id: 'r8', th: 'ฉายาพิเศษในเกม',       cat: 'cosmetic',  cost: 30,  cur: 'star', icon: 'tag',   stock: 99 },
   ];
 
-  // ---- students ----
+  // ---- students (seed — used only to bootstrap a brand-new Supabase project) ----
   const NAMES = [
     ['ด.ช. ธนกร ศรีสุข', 'กร', 'm', 'present'],
     ['ด.ญ. พิมพ์ชนก ใจดี', 'พิม', 'f', 'present'],
@@ -115,7 +120,7 @@
     { key: 'earth', th: 'กิลด์ดิน',   en: 'Earth Guild', icon: 'map',   hue: 88,  color: 'oklch(0.7 0.18 88)'  },
   ];
 
-  const STUDENTS = NAMES.map((n, i) => {
+  const SEED_STUDENTS = NAMES.map((n, i) => {
     const level = [12,18,7,15,5,21,9,11,24,8,3,16,13,6,19,10][i];
     const xp = seeded(i, 120, 940);
     const xpMax = 1000;
@@ -147,15 +152,19 @@
       },
       badges: seeded(i, 1, 9),
       guild: GUILDS[i % 4].key,
+      custom: false,
+      deleted: false,
     };
   });
 
-  // class-level derived stats
-  function countStatus(k) { return STUDENTS.filter(s => s.status === k).length; }
-  const CLASS = {
+  // class-level derived stats (from the seed roster — used for the static SEASON/ACHIEVEMENTS snapshot below)
+  function countStatus(k) { return SEED_STUDENTS.filter(s => s.status === k).length; }
+  const CLASS_SEED = {
     name: 'ป.4/2', room: 'อาคาร 2 ห้อง 204',
     teacher: 'ครูมานี รักเรียน', year: 'ปีการศึกษา 2568',
-    total: STUDENTS.length,
+  };
+  const CLASS = Object.assign({}, CLASS_SEED, {
+    total: SEED_STUDENTS.length,
     summary: {
       present: countStatus('present') + countStatus('late'),
       absent: countStatus('absent'),
@@ -165,11 +174,11 @@
       activity: countStatus('activity'),
     },
     welfare: {
-      milk: STUDENTS.filter(s => s.welfare.milk).length,
-      brush: STUDENTS.filter(s => s.welfare.brush).length,
-      lunch: STUDENTS.filter(s => s.welfare.lunch).length,
+      milk: SEED_STUDENTS.filter(s => s.welfare.milk).length,
+      brush: SEED_STUDENTS.filter(s => s.welfare.brush).length,
+      lunch: SEED_STUDENTS.filter(s => s.welfare.lunch).length,
     },
-  };
+  });
 
   // weekly attendance trend (for dashboard chart)
   const WEEK_TREND = [
@@ -178,7 +187,7 @@
   ];
 
   // ---- class total power / level ----
-  const CLASS_XP = STUDENTS.reduce((a, s) => a + s.game.level * 1000 + s.game.xp, 0);
+  const CLASS_XP = SEED_STUDENTS.reduce((a, s) => a + s.game.level * 1000 + s.game.xp, 0);
   const CLASS_LEVEL = Math.floor(CLASS_XP / 8000) + 1;
 
   // ---- season ----
@@ -213,18 +222,18 @@
     ],
   };
 
-  // ---- hall of fame achievement categories ----
-  function topBy(fn) { return [...STUDENTS].sort((a, b) => fn(b) - fn(a))[0]; }
+  // ---- hall of fame achievement categories (static snapshot from the seed roster) ----
+  function topBySeed(fn) { return [...SEED_STUDENTS].sort((a, b) => fn(b) - fn(a))[0]; }
   const ACHIEVEMENTS = [
-    { key: 'mvp',     th: 'MVP ประจำสัปดาห์', icon: 'crown',  hue: 50,  holder: topBy(s => s.game.level * 1000 + s.game.xp) },
-    { key: 'helper',  th: 'ผู้ช่วยยอดเยี่ยม',  icon: 'heart',  hue: 350, holder: topBy(s => s.game.stars) },
-    { key: 'reader',  th: 'นักอ่านแห่งปี',     icon: 'book',   hue: 200, holder: topBy(s => s.game.territories.thai) },
-    { key: 'solver',  th: 'นักแก้ปัญหา',       icon: 'calc',   hue: 265, holder: topBy(s => s.game.territories.math) },
-    { key: 'attend',  th: 'ฮีโร่มาเรียน',      icon: 'check',  hue: 150, holder: topBy(s => (s.status === 'present' ? 1 : 0) * 100 + s.badges) },
-    { key: 'coder',   th: 'ฮีโร่โค้ดดิ้ง',     icon: 'tool',   hue: 230, holder: topBy(s => s.game.territories.career) },
+    { key: 'mvp',     th: 'MVP ประจำสัปดาห์', icon: 'crown',  hue: 50,  holder: topBySeed(s => s.game.level * 1000 + s.game.xp) },
+    { key: 'helper',  th: 'ผู้ช่วยยอดเยี่ยม',  icon: 'heart',  hue: 350, holder: topBySeed(s => s.game.stars) },
+    { key: 'reader',  th: 'นักอ่านแห่งปี',     icon: 'book',   hue: 200, holder: topBySeed(s => s.game.territories.thai) },
+    { key: 'solver',  th: 'นักแก้ปัญหา',       icon: 'calc',   hue: 265, holder: topBySeed(s => s.game.territories.math) },
+    { key: 'attend',  th: 'ฮีโร่มาเรียน',      icon: 'check',  hue: 150, holder: topBySeed(s => (s.status === 'present' ? 1 : 0) * 100 + s.badges) },
+    { key: 'coder',   th: 'ฮีโร่โค้ดดิ้ง',     icon: 'tool',   hue: 230, holder: topBySeed(s => s.game.territories.career) },
   ];
 
-  // ---- pet mood (computed from real class data) ----
+  // ---- pet mood (computed from live class data) ----
   const PET_MOODS = [
     { key: 'excited', th: 'ร่าเริงมาก', emoji: '🤩', hue: 88,  msg: 'พลังงานเต็มร้อย! ห้องเรียนยอดเยี่ยม' },
     { key: 'happy',   th: 'มีความสุข',  emoji: '😊', hue: 150, msg: 'อารมณ์ดี ทุกคนมาครบ' },
@@ -237,7 +246,7 @@
     const ss = getStudents();
     const today = dateKey(new Date());
     const log = getScoreLog();
-    const todayXP = log.filter(function(e) { return e.type === 'xp' && e.at && e.at.slice(0,10) === today; })
+    const todayXP = log.filter(function(e) { return e.type === 'xp' && e.at && new Date(Number(e.at)).toISOString().slice(0,10) === today; })
       .reduce(function(a,e) { return a + (Number(e.amount)||0); }, 0);
     const presentCount = ss.filter(function(s) { return s.status === 'present' || s.status === 'late' || s.status === 'activity'; }).length;
     const rate = ss.length ? presentCount / ss.length : 0;
@@ -249,7 +258,7 @@
     return PET_MOODS[2];
   }
 
-  // ---- boss skills ----
+  // ---- boss skills (ephemeral session flair — stays local, not classroom record data) ----
   const BOSS_SKILLS = [
     { key: 'chaos_storm', th: 'พายุแห่งความโกลาหล', en: 'Chaos Storm',  desc: 'ลด HP ทีม 10% ทันที',      icon: 'spark',  hue: 305, duration: 0 },
     { key: 'shield_mode', th: 'โหมดโล่เหล็ก',       en: 'Shield Mode',  desc: 'ดาเมจลดครึ่งหนึ่ง 1 วัน',  icon: 'shield', hue: 200, duration: 1 },
@@ -281,14 +290,12 @@
   const BOSS = {
     name: 'ราชันย์สมการ', en: 'The Equation Tyrant', subject: 'คณิตศาสตร์',
     hp: 3120, hpMax: 5000, icon: 'fire', hue: 22, ends: 'อีก 2 วัน', element: 'อสูรพีชคณิต',
-    // how the class deals damage
     attacks: [
       { th: 'ตอบถูกในคาบเรียน', dmg: 25, icon: 'spark' },
       { th: 'ส่งการบ้านครบทั้งกลุ่ม', dmg: 60, icon: 'report' },
       { th: 'ชนะมินิเกมคณิต', dmg: 40, icon: 'game' },
       { th: 'ช่วยติวเพื่อน', dmg: 35, icon: 'heart' },
     ],
-    // recent damage feed (studentIdx into STUDENTS, dmg, action)
     feed: [
       { who: 2, dmg: 60, act: 'ส่งการบ้านครบทั้งกลุ่ม', t: 'เมื่อสักครู่' },
       { who: 5, dmg: 40, act: 'ชนะมินิเกมคณิต', t: '1 นาทีที่แล้ว' },
@@ -309,7 +316,6 @@
     { no: 2, th: 'ลีกนักสำรวจวิทยาศาสตร์',     en: 'Science Explorer League',     state: 'locked',  icon: 'spark', hue: 160 },
     { no: 3, th: 'มหาสมุทรภาษาแห่งโลกกว้าง',   en: 'Language Ocean Voyage',       state: 'locked',  icon: 'book',  hue: 200 },
   ];
-  // milestones along the active season track (xp threshold -> reward)
   const SEASON_TRACK = [
     { at: 0,      th: 'เปิดฤดูกาล',          icon: 'flag',   reward: 'ปลดล็อกดินแดนคณิต' },
     { at: 60000,  th: 'ด่านที่ 1 สำเร็จ',     icon: 'star',   reward: '+สติกเกอร์ฤดูกาล' },
@@ -331,77 +337,101 @@
     { key: 'guild',     th: 'หอสมาคม',       sub: 'การ์ดฮีโร่',        route: 'guild',     icon: 'users',  hue: 270, pos: [67, 82] },
   ];
 
-  // ---- class info CRUD with localStorage persistence ----
-  const LS_CLASS = 'gcos.class.info';
-  const CLASS_BASE = { name: CLASS.name, room: CLASS.room, teacher: CLASS.teacher, year: CLASS.year };
+  /* ============================================================
+     Supabase-backed table cache. Each store keeps an in-memory copy
+     of one table, fetches it once on load (seeding the table from
+     local mock data the very first time a fresh project is empty),
+     and subscribes to Realtime so every open tab/device converges
+     on the same data. Reads stay perfectly synchronous (components
+     never had to know data moved to a real backend); writes update
+     the cache immediately for instant UI feedback, then persist to
+     Supabase in the background.
+     ============================================================ */
+  const ALL_STORES = [];
+
+  function makeStore(table, keyFields, eventName, seedRows) {
+    let rows = [];
+    let seeded = false;
+
+    function keyOf(row) { return keyFields.map(function (f) { return row[f]; }).join('::'); }
+    function notify() { window.dispatchEvent(new CustomEvent(eventName)); }
+
+    function applyAndNotify(data) { rows = data || []; notify(); }
+
+    function load() {
+      window.SB.from(table).select('*').then(function (res) {
+        if (res.error) { console.error('[GC] load', table, res.error); return; }
+        if (!seeded && (res.data || []).length === 0 && seedRows && seedRows.length) {
+          seeded = true;
+          window.SB.from(table).insert(seedRows).then(function (r2) {
+            if (r2.error) { console.error('[GC] seed', table, r2.error); applyAndNotify([]); return; }
+            window.SB.from(table).select('*').then(function (r3) { applyAndNotify(r3.data); });
+          });
+        } else {
+          applyAndNotify(res.data);
+        }
+      });
+    }
+
+    load();
+
+    window.SB.channel('rt:' + table)
+      .on('postgres_changes', { event: '*', schema: 'public', table: table }, function (payload) {
+        if (payload.eventType === 'DELETE') {
+          const k = keyOf(payload.old);
+          rows = rows.filter(function (r) { return keyOf(r) !== k; });
+        } else {
+          const row = payload.new;
+          const k = keyOf(row);
+          const idx = rows.findIndex(function (r) { return keyOf(r) === k; });
+          if (idx >= 0) rows[idx] = row; else rows.push(row);
+        }
+        notify();
+      })
+      .subscribe();
+
+    const store = {
+      list: function () { return rows; },
+      reload: load,
+      upsert: function (row) {
+        const k = keyOf(row);
+        const idx = rows.findIndex(function (r) { return keyOf(r) === k; });
+        if (idx >= 0) rows[idx] = Object.assign({}, rows[idx], row); else rows.push(row);
+        notify();
+        window.SB.from(table).upsert(row).then(function (r) { if (r.error) console.error('[GC] upsert', table, r.error); });
+      },
+      remove: function (match) {
+        rows = rows.filter(function (r) { return !keyFields.every(function (f) { return r[f] === match[f]; }); });
+        notify();
+        window.SB.from(table).delete().match(match).then(function (r) { if (r.error) console.error('[GC] delete', table, r.error); });
+      },
+    };
+    ALL_STORES.push(store);
+    return store;
+  }
+
+  // RLS blocks reads until the teacher is signed in — the very first load()
+  // call above (made while logged out) comes back empty, so re-fetch every
+  // store right after sign-in to pick up the real data.
+  window.SB.auth.onAuthStateChange(function (event) {
+    if (event === 'SIGNED_IN') ALL_STORES.forEach(function (s) { s.reload(); });
+  });
+
+  // ---- class info ----
+  const classesStore = makeStore('classes', ['id'], 'gc:class-changed', [Object.assign({ id: 'default' }, CLASS_SEED)]);
 
   function getClass() {
-    try {
-      const saved = JSON.parse(localStorage.getItem(LS_CLASS));
-      return saved ? { ...CLASS, ...saved } : CLASS;
-    } catch { return CLASS; }
+    const row = classesStore.list()[0];
+    return row ? Object.assign({}, CLASS, row) : CLASS;
   }
-
   function updateClass(data) {
     const cur = getClass();
-    const next = { ...cur, ...data };
-    localStorage.setItem(LS_CLASS, JSON.stringify({ name: next.name, room: next.room, teacher: next.teacher, year: next.year }));
-    window.dispatchEvent(new CustomEvent('gc:class-changed'));
+    const next = Object.assign({}, cur, data);
+    classesStore.upsert({ id: 'default', name: next.name, room: next.room, teacher: next.teacher, year: next.year });
   }
 
-  // ---- student CRUD with localStorage persistence ----
-  const LS_DEL = 'gcos.students.deleted';
-  const LS_ADD = 'gcos.students.added';
-
-  function loadDeleted() { try { return new Set(JSON.parse(localStorage.getItem(LS_DEL)) || []); } catch { return new Set(); } }
-  function loadAdded()   { try { return JSON.parse(localStorage.getItem(LS_ADD)) || []; } catch { return []; } }
-
-  // ---- score log ----
-  const LS_SCORE = 'gcos.score.log';
-  function getScoreLog() { try { return JSON.parse(localStorage.getItem(LS_SCORE)) || []; } catch { return []; } }
-  function addScoreLog(entry) {
-    const log = getScoreLog();
-    log.unshift({ ...entry, at: Date.now() });
-    localStorage.setItem(LS_SCORE, JSON.stringify(log.slice(0, 200)));
-    // update student game stats so all modules stay in sync
-    if (entry.studentId) {
-      const all = getStudents();
-      const s = all.find(x => x.id === entry.studentId);
-      if (s) {
-        const game = { ...s.game };
-        const amt = Number(entry.amount) || 0;
-        if (entry.type === 'xp') {
-          game.xp = (game.xp || 0) + amt;
-          while (game.xp >= (game.xpMax || 1000)) {
-            game.xp -= (game.xpMax || 1000);
-            game.level = (game.level || 1) + 1;
-            game.tier = tierOf(game.level);
-            game.rankIdx = Math.min(5, Math.floor(game.level / 4.2));
-            game.rank = RANKS[game.rankIdx].key;
-          }
-        } else if (entry.type === 'coin') {
-          game.coins = (game.coins || 0) + amt;
-        } else if (entry.type === 'star') {
-          game.stars = (game.stars || 0) + amt;
-        }
-        const ov = getOverrides();
-        ov[entry.studentId] = { ...(ov[entry.studentId] || {}), game };
-        localStorage.setItem(LS_OVERRIDES, JSON.stringify(ov));
-      }
-    }
-    window.dispatchEvent(new CustomEvent('gc:score-added', { detail: entry }));
-    window.dispatchEvent(new CustomEvent('gc:students-changed'));
-  }
-
-  // ---- student overrides (for updateStudent) ----
-  const LS_OVERRIDES = 'gcos.students.overrides';
-  function getOverrides() { try { return JSON.parse(localStorage.getItem(LS_OVERRIDES)) || {}; } catch { return {}; } }
-  function updateStudent(id, data) {
-    const ov = getOverrides();
-    ov[id] = { ...(ov[id] || {}), ...data };
-    localStorage.setItem(LS_OVERRIDES, JSON.stringify(ov));
-    window.dispatchEvent(new CustomEvent('gc:students-changed'));
-  }
+  // ---- students ----
+  const studentsStore = makeStore('students', ['id'], 'gc:students-changed', SEED_STUDENTS);
 
   function makeStudent(data, idx) {
     const h = +(data.h || 130); const w = +(data.w || 28);
@@ -421,53 +451,79 @@
         stars: 0, coins: 0, tier: tierOf(1), territories: terr,
         hue: Math.floor(Math.random() * 360) },
       badges: 0,
-      _custom: true,
+      custom: true,
+      deleted: false,
     };
   }
 
   function getStudents() {
-    const deleted = loadDeleted();
-    const added = loadAdded();
-    const overrides = getOverrides();
-    const base = STUDENTS.filter(s => !deleted.has(s.id)).map(s =>
-      overrides[s.id] ? { ...s, ...overrides[s.id],
-        health: { ...s.health, ...(overrides[s.id].health || {}) } } : s
-    );
-    const custom = added.map((d, i) => {
-      const s = makeStudent(d, i);
-      return overrides[s.id] ? { ...s, ...overrides[s.id] } : s;
-    });
-    return [...base, ...custom];
+    return studentsStore.list().filter(function (s) { return !s.deleted; });
   }
 
   function addStudent(data) {
-    const added = loadAdded();
     const all = getStudents();
     data.no = all.length + 1;
-    data.id = 'C' + Date.now();
-    added.push(data);
-    localStorage.setItem(LS_ADD, JSON.stringify(added));
-    window.dispatchEvent(new CustomEvent('gc:students-changed'));
+    const row = makeStudent(data, all.length);
+    studentsStore.upsert(row);
   }
 
   function deleteStudent(id) {
-    const deleted = loadDeleted();
-    deleted.add(id);
-    localStorage.setItem(LS_DEL, JSON.stringify([...deleted]));
-    // also remove from added list if it's a custom student
-    const added = loadAdded().filter(d => d.id !== id);
-    localStorage.setItem(LS_ADD, JSON.stringify(added));
-    window.dispatchEvent(new CustomEvent('gc:students-changed'));
+    const row = studentsStore.list().find(function (s) { return s.id === id; });
+    if (!row) return;
+    studentsStore.upsert(Object.assign({}, row, { deleted: true }));
   }
 
-  // ---- full academic year attendance history ----
-  // ปีการศึกษา 2568: เทอม 1 = 19 พ.ค. 68 - 10 ต.ค. 68
-  //                   เทอม 2 = 3 พ.ย. 68 - 20 มี.ค. 69 (= CE 2025-2026)
-  // Today in app = 29 May 2026 (CE) = first weeks of next academic year
+  function updateStudent(id, data) {
+    const row = studentsStore.list().find(function (s) { return s.id === id; });
+    if (!row) return;
+    const next = Object.assign({}, row, data);
+    if (data.health) next.health = Object.assign({}, row.health, data.health);
+    if (data.welfare) next.welfare = Object.assign({}, row.welfare, data.welfare);
+    studentsStore.upsert(next);
+  }
+
+  // ---- score log (XP / coin / star awards — also updates the student's live game stats) ----
+  const scoreLogStore = makeStore('score_log', ['id'], 'gc:scorelog-changed', []);
+
+  function getScoreLog() {
+    return [...scoreLogStore.list()].sort(function (a, b) { return (Number(b.at) || 0) - (Number(a.at) || 0); });
+  }
+
+  function addScoreLog(entry) {
+    const at = Date.now();
+    const row = Object.assign({}, entry, { id: 'SC' + at + Math.random().toString(36).slice(2, 7), at: at });
+    scoreLogStore.upsert(row);
+
+    if (entry.studentId) {
+      const s = studentsStore.list().find(function (x) { return x.id === entry.studentId; });
+      if (s) {
+        const game = Object.assign({}, s.game);
+        const amt = Number(entry.amount) || 0;
+        if (entry.type === 'xp') {
+          game.xp = (game.xp || 0) + amt;
+          while (game.xp >= (game.xpMax || 1000)) {
+            game.xp -= (game.xpMax || 1000);
+            game.level = (game.level || 1) + 1;
+            game.tier = tierOf(game.level);
+            game.rankIdx = Math.min(5, Math.floor(game.level / 4.2));
+            game.rank = RANKS[game.rankIdx].key;
+          }
+        } else if (entry.type === 'coin') {
+          game.coins = (game.coins || 0) + amt;
+        } else if (entry.type === 'star') {
+          game.stars = (game.stars || 0) + amt;
+        }
+        updateStudent(entry.studentId, { game: game });
+      }
+    }
+    window.dispatchEvent(new CustomEvent('gc:score-added', { detail: row }));
+  }
+
+  // ---- full academic year attendance history (deterministic seed, used as the default
+  // for any school day the teacher has not explicitly edited/saved yet) ----
   const YEAR_START = new Date(2025, 4, 19);  // 19 May 2025
   const YEAR_END   = new Date(2026, 4, 29);  // 29 May 2026 (today)
 
-  // Thai public holidays to skip (MM-DD format, year-agnostic)
   const HOLIDAYS = new Set([
     '05-05','06-03','07-28','08-12','10-13','10-23','12-05','12-10','12-31',
     '01-01','01-13','02-26','04-06','04-13','04-14','04-15','05-01','05-12',
@@ -478,7 +534,6 @@
     if (day === 0 || day === 6) return false;
     const mmdd = String(d.getMonth() + 1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
     if (HOLIDAYS.has(mmdd)) return false;
-    // semester break: Oct 11 - Nov 2, and Mar 21 - May 18
     const m = d.getMonth() + 1, dt = d.getDate();
     if ((m === 10 && dt >= 11) || m === 11 && dt <= 2) return false;
     if ((m === 3 && dt >= 21) || m === 4 || (m === 5 && dt <= 18)) return false;
@@ -489,7 +544,6 @@
     return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
   }
 
-  // deterministic seeded status per student per day
   const STATUS_POOL = ['present','present','present','present','present','present','present','late','absent','sick','leave','activity'];
   function seededStatus(studentIdx, dayOffset) {
     const x = Math.sin(studentIdx * 127.1 + dayOffset * 311.7) * 43758.5453;
@@ -501,15 +555,13 @@
   }
 
   const ATTENDANCE_HISTORY = {};
-  const LS_ATT = 'gcos.att';
-
   let _dayOffset = 0;
   const _iter = new Date(YEAR_START);
   while (_iter <= YEAR_END) {
     if (isSchoolDay(_iter)) {
       const key = dateKey(_iter);
       const off = _dayOffset;
-      ATTENDANCE_HISTORY[key] = STUDENTS.map((s, i) => ({
+      ATTENDANCE_HISTORY[key] = SEED_STUDENTS.map((s, i) => ({
         id: s.id,
         status: seededStatus(i, off),
         milk:  seededBool(i, off, 1),
@@ -521,13 +573,14 @@
     _iter.setDate(_iter.getDate() + 1);
   }
 
+  // ---- attendance overrides (teacher-saved days) ----
+  const attendanceStore = makeStore('attendance', ['date', 'student_id'], 'gc:attendance-changed', []);
+
   function getAttendance(dateStr) {
-    const LS_KEY = LS_ATT + '.' + dateStr;
-    try {
-      const saved = localStorage.getItem(LS_KEY);
-      if (saved) return JSON.parse(saved);
-    } catch {}
-    // merge history with current students (add new, drop deleted)
+    const overrideRows = attendanceStore.list().filter(function (r) { return r.date === dateStr; });
+    if (overrideRows.length) {
+      return overrideRows.map(function (r) { return { id: r.student_id, status: r.status, milk: r.milk, brush: r.brush, lunch: r.lunch }; });
+    }
     const students = getStudents();
     const hist = ATTENDANCE_HISTORY[dateStr] || [];
     const histMap = Object.fromEntries(hist.map(r => [r.id, r]));
@@ -535,27 +588,20 @@
   }
 
   function saveAttendance(dateStr, rows) {
-    try { localStorage.setItem(LS_ATT + '.' + dateStr, JSON.stringify(rows)); } catch {}
+    rows.forEach(function (r) {
+      attendanceStore.upsert({ date: dateStr, student_id: r.id, status: r.status, milk: r.milk, brush: r.brush, lunch: r.lunch });
+    });
   }
 
   // ---- student attendance summary (counts per status for the academic year) ----
   function getStudentAttendanceSummary(id) {
     const counts = { present: 0, late: 0, sick: 0, leave: 0, activity: 0, absent: 0 };
-    // saved localStorage dates take precedence over seeded data for that date
     const savedDates = new Set();
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      if (k && k.startsWith(LS_ATT + '.')) {
-        const dateStr = k.replace(LS_ATT + '.', '');
-        savedDates.add(dateStr);
-        try {
-          const rows = JSON.parse(localStorage.getItem(k)) || [];
-          const r = rows.find(x => x.id === id);
-          if (r) counts[r.status] = (counts[r.status] || 0) + 1;
-        } catch {}
-      }
-    }
-    // seeded history for dates not overridden
+    attendanceStore.list().forEach(function (r) {
+      if (r.student_id !== id) return;
+      savedDates.add(r.date);
+      counts[r.status] = (counts[r.status] || 0) + 1;
+    });
     for (const dateStr in ATTENDANCE_HISTORY) {
       if (savedDates.has(dateStr)) continue;
       const r = ATTENDANCE_HISTORY[dateStr].find(x => x.id === id);
@@ -576,13 +622,10 @@
   }
 
   // ---- custom rewards (teacher-created) ----
-  const LS_CUSTOM_REWARDS = 'gcos.rewards.custom';
-  function getCustomRewards() { try { return JSON.parse(localStorage.getItem(LS_CUSTOM_REWARDS)) || []; } catch { return []; } }
+  const customRewardsStore = makeStore('custom_rewards', ['id'], 'gc:rewards-changed', []);
+  function getCustomRewards() { return customRewardsStore.list(); }
   function addCustomReward(r) {
-    const list = getCustomRewards();
-    list.push({ ...r, id: 'cr' + Date.now() });
-    localStorage.setItem(LS_CUSTOM_REWARDS, JSON.stringify(list));
-    window.dispatchEvent(new CustomEvent('gc:rewards-changed'));
+    customRewardsStore.upsert(Object.assign({}, r, { id: 'cr' + Date.now() }));
   }
 
   // list all school days between two dates
@@ -626,7 +669,6 @@
   }
 
   // ---- class-level achievements ----
-  const LS_CLASS_ACH = 'gcos.class.achievements';
   const CLASS_ACHIEVEMENTS = [
     { key: 'attend_all',  th: 'เข้าเรียนครบทั้งห้อง',          icon: 'check',  hue: 150, badge: 'Perfect Attendance', reward: '+500 XP ห้อง', condition: function(ss) { return ss.every(function(s) { return s.status !== 'absent'; }); } },
     { key: 'stars100',    th: 'ดาวรวม 100 ดวง',                 icon: 'star',   hue: 50,  badge: 'Star Collective',    reward: '+300 XP ห้อง', condition: function(ss) { return ss.reduce(function(a,s) { return a+s.game.stars; },0) >= 100; } },
@@ -637,22 +679,16 @@
     { key: 'allguild',    th: 'ทุกกิลด์มีสมาชิก Lv.5+',        icon: 'fire',   hue: 22,  badge: 'Alliance of Power',  reward: '+250 XP ทุกคน', condition: function(ss) { return GUILDS.every(function(g) { return ss.filter(function(s){ return s.guild===g.key && s.game.level>=5; }).length >= 1; }); } },
     { key: 'badges20',    th: 'เหรียญตราสะสม 20+',              icon: 'trophy', hue: 280, badge: 'Badge Hunters',      reward: 'ของรางวัลพิเศษ', condition: function(ss) { return ss.reduce(function(a,s){return a+(s.badges||0);},0) >= 20; } },
   ];
+  const classAchClaimedStore = makeStore('class_achievements_claimed', ['key'], 'gc:students-changed', []);
   function getClassAchievements() {
     const ss = getStudents();
-    var claimed = [];
-    try { claimed = JSON.parse(localStorage.getItem(LS_CLASS_ACH)) || []; } catch(e) {}
+    const claimed = classAchClaimedStore.list().map(function (r) { return r.key; });
     return CLASS_ACHIEVEMENTS.map(function(a) {
       return Object.assign({}, a, { done: a.condition(ss), claimed: claimed.includes(a.key) });
     });
   }
   function claimClassAchievement(key) {
-    var list = [];
-    try { list = JSON.parse(localStorage.getItem(LS_CLASS_ACH)) || []; } catch(e) {}
-    if (!list.includes(key)) {
-      list.push(key);
-      localStorage.setItem(LS_CLASS_ACH, JSON.stringify(list));
-    }
-    window.dispatchEvent(new CustomEvent('gc:students-changed'));
+    classAchClaimedStore.upsert({ key: key });
   }
 
   // ---- titles (earned by meeting conditions, highest match wins) ----
@@ -673,24 +709,14 @@
   // ---- consecutive present-day streak ----
   function getStudentStreak(studentId) {
     const present = new Set(['present', 'late', 'activity']);
-    const saved = {};
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      if (!k || !k.startsWith(LS_ATT + '.')) continue;
-      const dateStr = k.replace(LS_ATT + '.', '');
-      try {
-        const rows = JSON.parse(localStorage.getItem(k)) || [];
-        const r = rows.find(function(x) { return x.id === studentId; });
-        if (r) saved[dateStr] = r.status;
-      } catch (e) {}
-    }
-    // merge seeded history (not overridden by saved)
     const all = {};
     Object.keys(ATTENDANCE_HISTORY).forEach(function(d) {
       const r = ATTENDANCE_HISTORY[d].find(function(x) { return x.id === studentId; });
       if (r) all[d] = r.status;
     });
-    Object.keys(saved).forEach(function(d) { all[d] = saved[d]; });
+    attendanceStore.list().forEach(function (r) {
+      if (r.student_id === studentId) all[r.date] = r.status;
+    });
     const sorted = Object.keys(all).sort(function(a, b) { return b.localeCompare(a); });
     let streak = 0, prev = null;
     for (let i = 0; i < sorted.length; i++) {
@@ -747,36 +773,33 @@
     income:  [{ key: 'fundraise', th: 'กิจกรรมระดมทุน' }, { key: 'donation', th: 'เงินบริจาค' }, { key: 'fee', th: 'ค่าธรรมเนียมกิจกรรม' }],
     expense: [{ key: 'supplies', th: 'อุปกรณ์การเรียน' }, { key: 'snack', th: 'ขนม/อาหารกิจกรรม' }, { key: 'fieldtrip', th: 'ทัศนศึกษา' }, { key: 'reward', th: 'ของรางวัล' }],
   };
-  const FINANCE_SAVINGS_SEED = STUDENTS.map(function (s, i) { return { studentId: s.id, base: seeded(i + 60, 80, 650) }; });
-  const LS_FIN_SAVE = 'gcos.finance.savings';
-  const LS_FIN_LEDGER = 'gcos.finance.ledger';
+  const FINANCE_SAVINGS_SEED = SEED_STUDENTS.map(function (s, i) {
+    return { id: 'SV' + 'seed' + i, student_id: s.id, kind: 'deposit', amount: seeded(i + 60, 80, 650), at: Date.now() };
+  });
+  const financeSavingsStore = makeStore('finance_savings_txns', ['id'], 'gc:finance-changed', FINANCE_SAVINGS_SEED);
+  function getSavingsTxns() { return financeSavingsStore.list(); }
+  function addSavingsTxn(t) {
+    financeSavingsStore.upsert(Object.assign({}, t, { id: 'SV' + Date.now(), at: Date.now() }));
+  }
+  function getSavingsBalances() {
+    const ss = getStudents();
+    const adj = {};
+    getSavingsTxns().forEach(function (t) {
+      adj[t.student_id] = (adj[t.student_id] || 0) + (t.kind === 'deposit' ? Number(t.amount) || 0 : -(Number(t.amount) || 0));
+    });
+    return ss.map(function (s) { return { student: s, balance: Math.max(0, adj[s.id] || 0) }; });
+  }
+
   const LEDGER_SEED = [
     { id: 'L1', type: 'income',  category: 'fundraise', amount: 850, note: 'ขายของในงานกีฬาสี', date: '2026-05-10' },
     { id: 'L2', type: 'expense', category: 'supplies',  amount: 320, note: 'ซื้อสมุด-ดินสอกองกลาง', date: '2026-05-14' },
     { id: 'L3', type: 'income',  category: 'fee',       amount: 1600, note: 'เก็บค่าทัศนศึกษารอบแรก', date: '2026-05-20' },
     { id: 'L4', type: 'expense', category: 'reward',    amount: 240, note: 'ของรางวัลกล่องสุ่มประจำสัปดาห์', date: '2026-05-25' },
   ];
-  function getSavingsTxns() { try { return JSON.parse(localStorage.getItem(LS_FIN_SAVE)) || []; } catch (e) { return []; } }
-  function addSavingsTxn(t) {
-    const list = getSavingsTxns();
-    list.unshift(Object.assign({}, t, { id: 'SV' + Date.now(), at: Date.now() }));
-    localStorage.setItem(LS_FIN_SAVE, JSON.stringify(list.slice(0, 400)));
-    window.dispatchEvent(new CustomEvent('gc:finance-changed'));
-  }
-  function getSavingsBalances() {
-    const ss = getStudents();
-    const seedMap = {}; FINANCE_SAVINGS_SEED.forEach(function (f) { seedMap[f.studentId] = f.base; });
-    const adj = {};
-    getSavingsTxns().forEach(function (t) {
-      adj[t.studentId] = (adj[t.studentId] || 0) + (t.kind === 'deposit' ? Number(t.amount) || 0 : -(Number(t.amount) || 0));
-    });
-    return ss.map(function (s) { return { student: s, balance: Math.max(0, (seedMap[s.id] || 0) + (adj[s.id] || 0)) }; });
-  }
-  function getLedger() { try { return JSON.parse(localStorage.getItem(LS_FIN_LEDGER)) || LEDGER_SEED; } catch (e) { return LEDGER_SEED; } }
+  const financeLedgerStore = makeStore('finance_ledger', ['id'], 'gc:finance-changed', LEDGER_SEED);
+  function getLedger() { return [...financeLedgerStore.list()].sort(function (a, b) { return b.date.localeCompare(a.date); }); }
   function addLedgerEntry(entry) {
-    const list = getLedger();
-    localStorage.setItem(LS_FIN_LEDGER, JSON.stringify([Object.assign({}, entry, { id: 'L' + Date.now() }), ...list]));
-    window.dispatchEvent(new CustomEvent('gc:finance-changed'));
+    financeLedgerStore.upsert(Object.assign({}, entry, { id: 'L' + Date.now() }));
   }
   function getFinanceSummary() {
     const ledger = getLedger();
@@ -786,9 +809,9 @@
     return { income: income, expense: expense, net: income - expense, totalSavings: totalSavings };
   }
 
-  // ---- health: vaccination records ----
+  // ---- health: vaccination records (static reference data, no editing yet) ----
   const VACCINE_LIST = ['คอตีบ-บาดทะยัก-ไอกรน (DTP)', 'โปลิโอ (OPV)', 'หัด-คางทูม-หัดเยอรมัน (MMR)', 'ไข้สมองอักเสบเจอี (JE)', 'ไข้หวัดใหญ่ตามฤดูกาล'];
-  const VACCINATIONS = STUDENTS.map(function (s, i) {
+  const VACCINATIONS = SEED_STUDENTS.map(function (s, i) {
     return {
       studentId: s.id,
       records: VACCINE_LIST.map(function (v, k) {
@@ -805,21 +828,24 @@
   }
 
   // ---- home visits ----
-  const LS_HOME_VISIT = 'gcos.homevisits';
   const HOME_VISIT_SEED = [
-    { id: 'HV1', studentId: STUDENTS[4].id,  date: '2026-05-12', purpose: 'ติดตามการขาดเรียนบ่อย',     notes: 'พบผู้ปกครอง แจ้งเหตุผลครอบครัวย้ายที่พัก ตกลงให้มาเรียนปกติสัปดาห์หน้า', status: 'เสร็จสิ้น' },
-    { id: 'HV2', studentId: STUDENTS[10].id, date: '2026-05-20', purpose: 'ปัญหาด้านการเงินที่บ้าน',    notes: 'ประสานทุนการศึกษาเพิ่มเติมให้กับครอบครัว',                         status: 'ติดตามต่อ' },
-    { id: 'HV3', studentId: STUDENTS[1].id,  date: '2026-06-02', purpose: 'เยี่ยมบ้านประจำภาคเรียน',     notes: '',                                                                  status: 'นัดหมายแล้ว' },
+    { id: 'HV1', student_id: SEED_STUDENTS[4].id,  date: '2026-05-12', purpose: 'ติดตามการขาดเรียนบ่อย',     notes: 'พบผู้ปกครอง แจ้งเหตุผลครอบครัวย้ายที่พัก ตกลงให้มาเรียนปกติสัปดาห์หน้า', status: 'เสร็จสิ้น' },
+    { id: 'HV2', student_id: SEED_STUDENTS[10].id, date: '2026-05-20', purpose: 'ปัญหาด้านการเงินที่บ้าน',    notes: 'ประสานทุนการศึกษาเพิ่มเติมให้กับครอบครัว',                         status: 'ติดตามต่อ' },
+    { id: 'HV3', student_id: SEED_STUDENTS[1].id,  date: '2026-06-02', purpose: 'เยี่ยมบ้านประจำภาคเรียน',     notes: '',                                                                  status: 'นัดหมายแล้ว' },
   ];
-  function getHomeVisits() { try { return JSON.parse(localStorage.getItem(LS_HOME_VISIT)) || HOME_VISIT_SEED; } catch (e) { return HOME_VISIT_SEED; } }
+  const homeVisitsStore = makeStore('home_visits', ['id'], 'gc:homevisits-changed', HOME_VISIT_SEED);
+  function getHomeVisits() {
+    return [...homeVisitsStore.list()]
+      .sort(function (a, b) { return b.date.localeCompare(a.date); })
+      .map(function (v) { return Object.assign({}, v, { studentId: v.student_id }); });
+  }
   function addHomeVisit(v) {
-    const list = getHomeVisits();
-    localStorage.setItem(LS_HOME_VISIT, JSON.stringify([Object.assign({}, v, { id: 'HV' + Date.now() }), ...list]));
-    window.dispatchEvent(new CustomEvent('gc:homevisits-changed'));
+    const row = Object.assign({}, v, { id: 'HV' + Date.now() });
+    if (row.studentId) { row.student_id = row.studentId; delete row.studentId; }
+    homeVisitsStore.upsert(row);
   }
 
   // ---- documents ----
-  const LS_DOCS = 'gcos.documents';
   const DOC_SEED = [
     { id: 'D1', name: 'รายชื่อนักเรียน ป.4-2568.xlsx',          cat: 'รายชื่อ',    date: '2026-05-15', size: '48 KB',  icon: 'report' },
     { id: 'D2', name: 'แบบฟอร์มขออนุญาตทัศนศึกษา.pdf',          cat: 'แบบฟอร์ม',   date: '2026-05-20', size: '212 KB', icon: 'note' },
@@ -827,75 +853,68 @@
     { id: 'D4', name: 'บันทึกการประชุมผู้ปกครอง.docx',          cat: 'บันทึก',     date: '2026-05-25', size: '96 KB',  icon: 'book' },
     { id: 'D5', name: 'แผนการสอนหน่วยที่ 5.pdf',                cat: 'แผนการสอน',  date: '2026-05-27', size: '640 KB', icon: 'book' },
   ];
-  function getDocuments() { try { return JSON.parse(localStorage.getItem(LS_DOCS)) || DOC_SEED; } catch (e) { return DOC_SEED; } }
+  const documentsStore = makeStore('documents', ['id'], 'gc:documents-changed', DOC_SEED);
+  function getDocuments() { return [...documentsStore.list()].sort(function (a, b) { return b.date.localeCompare(a.date); }); }
   function addDocument(d) {
-    const list = getDocuments();
-    localStorage.setItem(LS_DOCS, JSON.stringify([Object.assign({}, d, { id: 'D' + Date.now() }), ...list]));
-    window.dispatchEvent(new CustomEvent('gc:documents-changed'));
+    documentsStore.upsert(Object.assign({}, d, { id: 'D' + Date.now() }));
   }
   function deleteDocument(id) {
-    localStorage.setItem(LS_DOCS, JSON.stringify(getDocuments().filter(function (d) { return d.id !== id; })));
-    window.dispatchEvent(new CustomEvent('gc:documents-changed'));
+    documentsStore.remove({ id: id });
   }
 
   // ---- parent communication: announcements + homework ----
-  const LS_ANN = 'gcos.announcements';
   const ANN_SEED = [
     { id: 'A1', title: 'ปิดเทอมภาคฤดูร้อน',                     body: 'แจ้งปิดภาคเรียนวันที่ 21 มี.ค. - 18 พ.ค. 2569 ขอให้นักเรียนเตรียมตัวเปิดเทอมใหม่', date: '2026-05-10', audience: 'ทุกคน' },
     { id: 'A2', title: 'นัดประชุมผู้ปกครองภาคเรียนที่ 1',        body: 'ขอเชิญผู้ปกครองเข้าร่วมประชุมวันเสาร์ที่ 6 มิ.ย. 2569 เวลา 09:00 น. ณ ห้องประชุมโรงเรียน', date: '2026-05-28', audience: 'ทุกคน' },
     { id: 'A3', title: 'แจ้งค่าธรรมเนียมกิจกรรมทัศนศึกษา',       body: 'กรุณาชำระเงินผ่านครูประจำชั้นภายในวันที่ 15 มิ.ย. 2569',                              date: '2026-06-01', audience: 'ทุกคน' },
   ];
-  function getAnnouncements() { try { return JSON.parse(localStorage.getItem(LS_ANN)) || ANN_SEED; } catch (e) { return ANN_SEED; } }
+  const announcementsStore = makeStore('announcements', ['id'], 'gc:announcements-changed', ANN_SEED);
+  function getAnnouncements() { return [...announcementsStore.list()].sort(function (a, b) { return b.date.localeCompare(a.date); }); }
   function addAnnouncement(a) {
-    const list = getAnnouncements();
-    localStorage.setItem(LS_ANN, JSON.stringify([Object.assign({}, a, { id: 'A' + Date.now(), date: dateKey(new Date()) }), ...list]));
-    window.dispatchEvent(new CustomEvent('gc:announcements-changed'));
+    announcementsStore.upsert(Object.assign({}, a, { id: 'A' + Date.now(), date: dateKey(new Date()) }));
   }
 
-  const LS_HW = 'gcos.homework';
   const HW_SEED = [
     { id: 'H1', subject: 'คณิตศาสตร์',     title: 'แบบฝึกหัดเศษส่วน หน้า 24-26',     due: '2026-06-05' },
     { id: 'H2', subject: 'ภาษาไทย',        title: 'คัดลายมือบทอาขยาน',               due: '2026-06-03' },
     { id: 'H3', subject: 'วิทยาศาสตร์',    title: 'ใบงานวงจรชีวิตผีเสื้อ',           due: '2026-06-08' },
   ];
-  function getHomework() { try { return JSON.parse(localStorage.getItem(LS_HW)) || HW_SEED; } catch (e) { return HW_SEED; } }
+  const homeworkStore = makeStore('homework', ['id'], 'gc:homework-changed', HW_SEED);
+  function getHomework() { return homeworkStore.list(); }
   function addHomework(h) {
-    const list = getHomework();
-    localStorage.setItem(LS_HW, JSON.stringify([Object.assign({}, h, { id: 'H' + Date.now() }), ...list]));
-    window.dispatchEvent(new CustomEvent('gc:homework-changed'));
+    homeworkStore.upsert(Object.assign({}, h, { id: 'H' + Date.now() }));
   }
 
   // ---- homework submission tracking: teacher assigns work per day (title/subject/score)
   // then records each student's submitted/not-submitted status with a click ----
-  const LS_HWA = 'gcos.hwassign';
   const HWA_SEED = [
     { id: 'HA1', title: 'แบบฝึกหัดเศษส่วน หน้า 24-26', subject: 'คณิตศาสตร์',   score: 10, date: '2026-05-27' },
     { id: 'HA2', title: 'คัดลายมือบทอาขยาน',           subject: 'ภาษาไทย',      score: 10, date: '2026-05-28' },
     { id: 'HA3', title: 'ใบงานวงจรชีวิตผีเสื้อ',        subject: 'วิทยาศาสตร์',  score: 10, date: '2026-05-29' },
   ];
-  function getHomeworkAssignments() { try { return JSON.parse(localStorage.getItem(LS_HWA)) || HWA_SEED; } catch (e) { return HWA_SEED; } }
+  const hwAssignStore = makeStore('homework_assignments', ['id'], 'gc:hwassign-changed', HWA_SEED);
+  const hwSubmitStore = makeStore('homework_submissions', ['assignment_id', 'student_id'], 'gc:hwsubmit-changed', []);
+
+  function getHomeworkAssignments() { return [...hwAssignStore.list()].sort(function (a, b) { return b.date.localeCompare(a.date); }); }
   function addHomeworkAssignment(h) {
-    const list = getHomeworkAssignments();
     const id = 'HA' + Date.now();
-    localStorage.setItem(LS_HWA, JSON.stringify([Object.assign({}, h, { id }), ...list]));
-    window.dispatchEvent(new CustomEvent('gc:hwassign-changed'));
+    hwAssignStore.upsert(Object.assign({}, h, { id: id }));
     return id;
   }
   function deleteHomeworkAssignment(id) {
-    localStorage.setItem(LS_HWA, JSON.stringify(getHomeworkAssignments().filter(function (h) { return h.id !== id; })));
-    localStorage.removeItem('gcos.hwsubmit.' + id);
-    window.dispatchEvent(new CustomEvent('gc:hwassign-changed'));
+    hwAssignStore.remove({ id: id });
+    hwSubmitStore.list().filter(function (r) { return r.assignment_id === id; })
+      .forEach(function (r) { hwSubmitStore.remove({ assignment_id: id, student_id: r.student_id }); });
   }
   function getHomeworkSubmissions(hwId) {
-    let saved = {};
-    try { saved = JSON.parse(localStorage.getItem('gcos.hwsubmit.' + hwId)) || {}; } catch (e) {}
-    return getStudents().map(function (s) { return { id: s.id, submitted: !!saved[s.id] }; });
+    const subMap = {};
+    hwSubmitStore.list().forEach(function (r) { if (r.assignment_id === hwId) subMap[r.student_id] = r.submitted; });
+    return getStudents().map(function (s) { return { id: s.id, submitted: !!subMap[s.id] }; });
   }
   function saveHomeworkSubmissions(hwId, rows) {
-    const map = {};
-    rows.forEach(function (r) { map[r.id] = r.submitted; });
-    localStorage.setItem('gcos.hwsubmit.' + hwId, JSON.stringify(map));
-    window.dispatchEvent(new CustomEvent('gc:hwsubmit-changed'));
+    rows.forEach(function (r) {
+      hwSubmitStore.upsert({ assignment_id: hwId, student_id: r.id, submitted: !!r.submitted });
+    });
   }
 
   // ---- reactive achievements (computed from live student data) ----
@@ -906,7 +925,6 @@
     const entriesById = {};
     log.forEach(function(e) { if (e.studentId) entriesById[e.studentId] = (entriesById[e.studentId] || 0) + 1; });
     const topEntries = [...ss].sort(function(a, b) { return (entriesById[b.id] || 0) - (entriesById[a.id] || 0); })[0];
-    // compute streaks once per student to avoid redundant localStorage scans
     const streakMap = {};
     ss.forEach(function(s) { streakMap[s.id] = getStudentStreak(s.id); });
     const topStreak = [...ss].sort(function(a, b) { return (streakMap[b.id] || 0) - (streakMap[a.id] || 0); })[0];
@@ -941,7 +959,7 @@
 
   window.GC = {
     STATUSES, PRESENT_LIKE, LIVE, RANKS, TIERS, tierOf, SUBJECTS, REWARDS,
-    STUDENTS, CLASS, WEEK_TREND,
+    STUDENTS: SEED_STUDENTS, CLASS, WEEK_TREND,
     CLASS_XP, CLASS_LEVEL, SEASON, PET, QUESTS, ACHIEVEMENTS, KINGDOM_ZONES,
     BOSS, SEASONS, SEASON_TRACK,
     GUILDS, DAILY_EVENTS, CLASS_ACHIEVEMENTS, BOSS_SKILLS, PET_MOODS,

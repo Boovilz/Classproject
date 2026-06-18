@@ -30,12 +30,27 @@ function App() {
   const [gRoute, setGRoute] = React.useState(saved.gRoute || 'home');
   const [profile, setProfile] = React.useState(null);
   const [flash, setFlash] = React.useState(null);       // {world} during portal->app transition
+  const [authReady, setAuthReady] = React.useState(false);
 
   React.useEffect(() => {
     localStorage.setItem(LS, JSON.stringify({ stage, world, tRoute, gRoute }));
   }, [stage, world, tRoute, gRoute]);
 
+  React.useEffect(() => {
+    window.SB.auth.getSession().then(({ data }) => {
+      if (!data.session && stage !== 'login') setStage('login');
+      setAuthReady(true);
+    });
+    const { data: sub } = window.SB.auth.onAuthStateChange((_event, session) => {
+      if (!session) setStage('login');
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
   const openStudent = (id) => setProfile(id);
+  const logout = () => { window.SB.auth.signOut(); setStage('login'); };
+
+  if (!authReady) return null;
 
   // cinematic enter from portal
   const enterWorld = (w) => {
@@ -50,7 +65,7 @@ function App() {
   if (stage === 'login') {
     body = <Login key="login" onLogin={() => setStage('portal')} />;
   } else if (stage === 'portal') {
-    body = <Portal key="portal" onEnter={enterWorld} onLogout={() => setStage('login')} />;
+    body = <Portal key="portal" onEnter={enterWorld} onLogout={logout} />;
   } else if (world === 'teacher') {
     const inner = tRoute === 'dashboard' ? <TeacherDashboard openStudent={openStudent} setRoute={setTRoute} />
       : tRoute === 'students' ? <StudentsGrid openStudent={openStudent} />
@@ -68,7 +83,7 @@ function App() {
       : tRoute === 'barcode' ? <BarcodeScore />
       : <StudentsGrid openStudent={openStudent} />;
     body = (
-      <TeacherShell key="t" route={tRoute} setRoute={setTRoute} onPortal={goPortal} onLogout={() => setStage('login')}>
+      <TeacherShell key="t" route={tRoute} setRoute={setTRoute} onPortal={goPortal} onLogout={logout}>
         <div key={tRoute} className="rise">{inner}</div>
       </TeacherShell>
     );
