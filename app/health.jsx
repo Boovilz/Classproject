@@ -448,6 +448,63 @@ function AddStudentModal({ onClose }) {
   );
 }
 
+/* printable sheet of every student's barcode (Code128 of เลขประจำตัวนักเรียน)
+   for cutting out and sticking onto notebooks or worksheets */
+function PrintBarcodesModal({ onClose }) {
+  const STUDENTS = useStudents();
+
+  function downloadOne(s) {
+    const canvas = document.getElementById('bc-print-' + s.id);
+    if (!canvas) return;
+    const a = document.createElement('a');
+    a.download = `barcode-${s.code}-${s.nick}.png`;
+    a.href = canvas.toDataURL('image/png');
+    a.click();
+  }
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 500, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <style>{`
+        @media print {
+          body * { visibility: hidden; }
+          #barcode-print-sheet, #barcode-print-sheet * { visibility: visible; }
+          #barcode-print-sheet { position: fixed; inset: 0; max-height: none; background: #fff; }
+          #barcode-print-toolbar, .barcode-card-actions { display: none !important; }
+        }
+      `}</style>
+      <div id="barcode-print-sheet" className="col" style={{ borderRadius: 'var(--r-xl)', padding: 24, gap: 16, width: '92vw', maxWidth: 920, maxHeight: '88vh', overflowY: 'auto', background: '#fff', boxShadow: '0 20px 60px -20px rgba(0,0,0,.5)' }}>
+        <div id="barcode-print-toolbar" className="row" style={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+          <div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: '#1a1430' }}>บาร์โค้ดนักเรียน</div>
+            <div style={{ fontSize: 12, color: '#777' }}>พิมพ์แล้วตัดติดสมุดหรือใบงาน เพื่อใช้สแกนเช็คชื่อ/ตรวจการบ้าน</div>
+          </div>
+          <div className="row" style={{ gap: 10 }}>
+            <button onClick={() => window.print()} className="btn" style={{ background: 'linear-gradient(120deg,var(--navy),var(--navy-2))', color: '#fff' }}>
+              <Icon name="download" size={15} color="#fff" /> พิมพ์ทั้งหมด
+            </button>
+            <button onClick={onClose} className="btn btn-ghost">ปิด</button>
+          </div>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 14 }}>
+          {STUDENTS.map(s => (
+            <div key={s.id} style={{ border: '1.5px dashed #ccc', borderRadius: 10, padding: '12px 10px', textAlign: 'center', background: '#fff' }}>
+              <div style={{ fontSize: 11, color: '#555', marginBottom: 4 }}>เลขที่ {String(s.no).padStart(2, '0')} · {s.nick}</div>
+              <StudentBarcode value={s.code} id={'bc-print-' + s.id} />
+              <div style={{ fontSize: 10, color: '#888', marginTop: 2, fontFamily: 'monospace' }}>{s.code}</div>
+              <div className="barcode-card-actions" style={{ marginTop: 6 }}>
+                <button onClick={() => downloadOne(s)} className="btn btn-ghost" style={{ fontSize: 11, padding: '4px 10px' }}>
+                  <Icon name="download" size={12} /> ดาวน์โหลด
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function StudentsGrid({ openStudent }) {
   const { STATUSES, getStudents, deleteStudent } = window.GC;
   const [students, setStudents] = React.useState(getStudents);
@@ -455,6 +512,7 @@ function StudentsGrid({ openStudent }) {
   const [showAdd, setShowAdd] = React.useState(false);
   const [editStudent, setEditStudent] = React.useState(null);
   const [confirmDel, setConfirmDel] = React.useState(null);
+  const [showBarcodes, setShowBarcodes] = React.useState(false);
 
   React.useEffect(() => {
     const refresh = () => setStudents(getStudents());
@@ -489,9 +547,14 @@ function StudentsGrid({ openStudent }) {
                 color: filter === k ? '#fff' : 'var(--ink-soft)', boxShadow: 'none' }}>{th}</button>
             ))}
           </div>
-          <button onClick={() => setShowAdd(true)} className="btn" style={{ fontSize: 13.5, background: 'linear-gradient(120deg,var(--navy),var(--navy-2))', color: '#fff' }}>
-            <Icon name="plus" size={17} /> เพิ่มนักเรียน
-          </button>
+          <div className="row" style={{ gap: 10 }}>
+            <button onClick={() => setShowBarcodes(true)} className="btn" style={{ fontSize: 13.5, background: 'var(--surface-2)', color: 'var(--ink-soft)' }}>
+              <Icon name="report" size={16} /> พิมพ์บาร์โค้ด 🔲
+            </button>
+            <button onClick={() => setShowAdd(true)} className="btn" style={{ fontSize: 13.5, background: 'linear-gradient(120deg,var(--navy),var(--navy-2))', color: '#fff' }}>
+              <Icon name="plus" size={17} /> เพิ่มนักเรียน
+            </button>
+          </div>
         </div>
 
         <div style={{ fontSize: 12.5, color: 'var(--muted)' }}>ทั้งหมด {students.length} คน · แสดง {filtered.length} คน</div>
@@ -534,6 +597,7 @@ function StudentsGrid({ openStudent }) {
 
       {editStudent && <EditStudentModal student={editStudent} onClose={() => setEditStudent(null)} />}
       {showAdd && <AddStudentModal onClose={() => setShowAdd(false)} />}
+      {showBarcodes && <PrintBarcodesModal onClose={() => setShowBarcodes(false)} />}
 
       {confirmDel && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 400, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

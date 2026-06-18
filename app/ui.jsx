@@ -227,6 +227,22 @@ function QRCodeBox({ value, size = 120, style }) {
   return <canvas ref={ref} width={size} height={size} style={{ borderRadius: 8, ...style }} />;
 }
 
+/* student barcode — renders a scannable Code128 barcode of the student's
+   เลขประจำตัวนักเรียน (the same `code` field used by the scan-to-record
+   lookups), onto a canvas so it can be printed or downloaded as PNG */
+function StudentBarcode({ value, id, height = 44 }) {
+  const ref = React.useRef(null);
+  React.useEffect(() => {
+    if (ref.current && window.JsBarcode && value) {
+      window.JsBarcode(ref.current, value, {
+        format: 'CODE128', height, width: 2, margin: 4,
+        displayValue: false, background: '#ffffff', lineColor: '#000000',
+      });
+    }
+  }, [value, height]);
+  return <canvas ref={ref} id={id} style={{ width: '100%', maxWidth: 180, height: 'auto', display: 'block', margin: '0 auto' }} />;
+}
+
 /* barcode scan bar — generic "ยิงบาร์โค้ดเลขประจำตัวนักเรียน" input.
    Scanners act as keyboards: they type the code then send Enter.
    Looks up the student by code/id and fires onScan(student) which the
@@ -285,4 +301,4 @@ function BarcodeRecordBar({ onScan, hint, autoFocus = true }) {
   );
 }
 
-Object.assign(window, { Icon, HeroAvatar, Stat, Bar, RankBadge, LineChart, useStudents, QRCodeBox, BarcodeRecordBar });
+Object.assign(window, { Icon, HeroAvatar, Stat, Bar, RankBadge, LineChart, useStudents, QRCodeBox, BarcodeRecordBar, StudentBarcode });
