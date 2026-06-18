@@ -57,6 +57,7 @@ const TEACHER_NAV = [
   { key: 'classadmin', th: 'ธุรการชั้นเรียน',    icon: 'report' },
   { key: 'behavior',   th: 'ความประพฤติ & XP',  icon: 'bolt' },
   { key: 'academic',   th: 'ผลการเรียน',        icon: 'book' },
+  { key: 'homework',   th: 'การบ้าน',            icon: 'edit' },
   { key: 'finance',    th: 'การเงินห้องเรียน',   icon: 'coin' },
   { key: 'health',     th: 'สุขภาพ',             icon: 'heart' },
   { key: 'homevisit',  th: 'เยี่ยมบ้าน',         icon: 'door' },

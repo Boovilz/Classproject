@@ -865,6 +865,39 @@
     window.dispatchEvent(new CustomEvent('gc:homework-changed'));
   }
 
+  // ---- homework submission tracking: teacher assigns work per day (title/subject/score)
+  // then records each student's submitted/not-submitted status with a click ----
+  const LS_HWA = 'gcos.hwassign';
+  const HWA_SEED = [
+    { id: 'HA1', title: 'แบบฝึกหัดเศษส่วน หน้า 24-26', subject: 'คณิตศาสตร์',   score: 10, date: '2026-05-27' },
+    { id: 'HA2', title: 'คัดลายมือบทอาขยาน',           subject: 'ภาษาไทย',      score: 10, date: '2026-05-28' },
+    { id: 'HA3', title: 'ใบงานวงจรชีวิตผีเสื้อ',        subject: 'วิทยาศาสตร์',  score: 10, date: '2026-05-29' },
+  ];
+  function getHomeworkAssignments() { try { return JSON.parse(localStorage.getItem(LS_HWA)) || HWA_SEED; } catch (e) { return HWA_SEED; } }
+  function addHomeworkAssignment(h) {
+    const list = getHomeworkAssignments();
+    const id = 'HA' + Date.now();
+    localStorage.setItem(LS_HWA, JSON.stringify([Object.assign({}, h, { id }), ...list]));
+    window.dispatchEvent(new CustomEvent('gc:hwassign-changed'));
+    return id;
+  }
+  function deleteHomeworkAssignment(id) {
+    localStorage.setItem(LS_HWA, JSON.stringify(getHomeworkAssignments().filter(function (h) { return h.id !== id; })));
+    localStorage.removeItem('gcos.hwsubmit.' + id);
+    window.dispatchEvent(new CustomEvent('gc:hwassign-changed'));
+  }
+  function getHomeworkSubmissions(hwId) {
+    let saved = {};
+    try { saved = JSON.parse(localStorage.getItem('gcos.hwsubmit.' + hwId)) || {}; } catch (e) {}
+    return getStudents().map(function (s) { return { id: s.id, submitted: !!saved[s.id] }; });
+  }
+  function saveHomeworkSubmissions(hwId, rows) {
+    const map = {};
+    rows.forEach(function (r) { map[r.id] = r.submitted; });
+    localStorage.setItem('gcos.hwsubmit.' + hwId, JSON.stringify(map));
+    window.dispatchEvent(new CustomEvent('gc:hwsubmit-changed'));
+  }
+
   // ---- reactive achievements (computed from live student data) ----
   function getAchievements() {
     const ss = getStudents();
@@ -915,5 +948,7 @@
     getHomeVisits, addHomeVisit,
     getDocuments, addDocument, deleteDocument,
     getAnnouncements, addAnnouncement, getHomework, addHomework,
+    getHomeworkAssignments, addHomeworkAssignment, deleteHomeworkAssignment,
+    getHomeworkSubmissions, saveHomeworkSubmissions,
   };
 })();

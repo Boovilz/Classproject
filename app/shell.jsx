@@ -58,6 +58,7 @@ function App() {
       : tRoute === 'classadmin' ? <ClassroomAdmin openStudent={openStudent} />
       : tRoute === 'behavior' ? <BehaviorXP openStudent={openStudent} />
       : tRoute === 'academic' ? <AcademicRecords openStudent={openStudent} />
+      : tRoute === 'homework' ? <HomeworkTracking openStudent={openStudent} />
       : tRoute === 'finance' ? <ClassroomFinance />
       : tRoute === 'health' ? <Health />
       : tRoute === 'homevisit' ? <HomeVisits openStudent={openStudent} />
