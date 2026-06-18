@@ -164,7 +164,7 @@ function ParentCommunication({ openStudent }) {
         <div className="glass col" style={{ borderRadius: 'var(--r-xl)', padding: 20, gap: 6 }}>
           {STUDENTS.map(st => {
             const subjectAvg = window.GC.getSubjectAverages();
-            const territories = st.game.territories;
+            const territories = st.territories;
             const overall = Math.round(window.GC.SUBJECTS.reduce((a, s) => a + (territories[s.key] || 0), 0) / window.GC.SUBJECTS.length);
             const color = overall >= 80 ? 'var(--emerald)' : overall >= 60 ? 'var(--orange)' : 'var(--st-absent)';
             return (
@@ -173,7 +173,7 @@ function ParentCommunication({ openStudent }) {
                 <HeroAvatar student={st} size={38} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div className="nowrap" style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--ink)' }}>{st.nick} · {st.name}</div>
-                  <div style={{ fontSize: 11, color: 'var(--muted)' }}>เลเวล {st.game.level} · {st.game.tier.th}</div>
+                  <div style={{ fontSize: 11, color: 'var(--muted)' }}>เลขที่ {st.no}</div>
                 </div>
                 <div style={{ width: 130 }}><Bar value={overall} max={100} color={color} height={7} /></div>
                 <span className="display" style={{ fontSize: 14, color, width: 40, textAlign: 'right' }}>{overall}%</span>

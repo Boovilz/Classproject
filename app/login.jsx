@@ -56,7 +56,7 @@ function Login({ onLogin }) {
               </div>
               <div>
                 <div className="display" style={{ fontSize: 20, color: '#fff', lineHeight: 1 }}>Classroom OS</div>
-                <div className="tech" style={{ fontSize: 12, color: 'var(--cyan)', letterSpacing: '.16em' }}>GAMIFIED EDITION</div>
+                <div className="tech" style={{ fontSize: 12, color: 'var(--cyan)', letterSpacing: '.16em' }}>TEACHER EDITION</div>
               </div>
             </div>
           </div>
@@ -64,10 +64,10 @@ function Login({ onLogin }) {
           <div style={{ position: 'relative' }}>
             <h1 style={{ fontSize: 40, color: '#fff', lineHeight: 1.05 }}>ห้องเรียน<br/>ที่มีชีวิต</h1>
             <p style={{ color: 'var(--ink-soft)', marginTop: 14, fontSize: 15, maxWidth: 320 }}>
-              ระบบบริหารจัดการชั้นเรียน ผสานโลกเกม RPG เพื่อครูยุคใหม่และนักเรียนที่กระตือรือร้น
+              ระบบบริหารจัดการชั้นเรียนครบวงจร เพื่อครูยุคใหม่และนักเรียนที่กระตือรือร้น
             </p>
             <div className="row" style={{ gap: 18, marginTop: 26 }}>
-              {[['users','จัดการชั้นเรียน'],['bolt','ระบบ XP & เลเวล'],['map','แผนที่ความรู้']].map((f,i)=>(
+              {[['users','จัดการชั้นเรียน'],['book','ผลการเรียน'],['heart','สุขภาพนักเรียน']].map((f,i)=>(
                 <div key={i} className="col" style={{ gap: 7, alignItems: 'flex-start' }}>
                   <div className="center" style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(255,255,255,.08)', color: 'var(--cyan)' }}>
                     <Icon name={f[0]} size={18} />

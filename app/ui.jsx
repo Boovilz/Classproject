@@ -85,9 +85,15 @@ function Icon({ name, size = 20, sw = 1.9, color = 'currentColor', style, fill =
   );
 }
 
-/* ---------- Avatar placeholder (RPG hero portrait) ---------- */
+/* ---------- Avatar placeholder ---------- */
+function hueFromId(id) {
+  if (!id) return 270;
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) % 360;
+  return h;
+}
 function HeroAvatar({ student, size = 64, ring, glow }) {
-  const hue = student?.game?.hue ?? 270;
+  const hue = hueFromId(student?.id);
   const bg = `radial-gradient(120% 120% at 50% 18%, oklch(0.72 0.16 ${hue}), oklch(0.42 0.18 ${(hue + 40) % 360}))`;
   const shadow = glow
     ? `0 0 0 2px ${ring || 'rgba(255,255,255,.35)'}, 0 0 24px -4px oklch(0.7 0.2 ${hue})`
@@ -159,20 +165,6 @@ function Bar({ value, max = 100, color, height = 9, glow }) {
   );
 }
 
-/* ---------- Rank badge ---------- */
-function RankBadge({ rank, size = 'md' }) {
-  const r = window.GC.RANKS.find(x => x.key === rank) || window.GC.RANKS[0];
-  const s = size === 'sm' ? { p: '3px 9px', f: 11.5, i: 13 } : { p: '5px 12px', f: 13, i: 15 };
-  return (
-    <span className="pill tech" style={{ padding: s.p, fontSize: s.f,
-      background: 'color-mix(in oklch, ' + r.color + ' 22%, transparent)',
-      color: r.color, border: '1px solid color-mix(in oklch, ' + r.color + ' 50%, transparent)',
-      textTransform: 'uppercase', letterSpacing: '.05em' }}>
-      <Icon name="shield" size={s.i} /> {r.key}
-    </span>
-  );
-}
-
 /* ---------- Sparkline / mini line chart ---------- */
 function LineChart({ data, w = 520, h = 180, color, color2, series2, yLabel, pad = 34 }) {
   const all = [...data.map(d => d.v), ...(series2 ? series2.map(d => d.v) : [])];
@@ -214,17 +206,6 @@ function useStudents() {
     return () => window.removeEventListener('gc:students-changed', refresh);
   }, []);
   return students;
-}
-
-/* QR code box — renders a QR encoding `value` onto a canvas */
-function QRCodeBox({ value, size = 120, style }) {
-  const ref = React.useRef(null);
-  React.useEffect(() => {
-    if (ref.current && window.QRCode) {
-      window.QRCode.toCanvas(ref.current, value, { width: size, margin: 1, color: { dark: '#1a1430', light: '#ffffff' } }, () => {});
-    }
-  }, [value, size]);
-  return <canvas ref={ref} width={size} height={size} style={{ borderRadius: 8, ...style }} />;
 }
 
 /* student barcode — renders a scannable Code128 barcode of the student's
@@ -349,4 +330,4 @@ function PrintTableModal({ title, subtitle, columns, rows, onClose }) {
   );
 }
 
-Object.assign(window, { Icon, HeroAvatar, Stat, Bar, RankBadge, LineChart, useStudents, QRCodeBox, BarcodeRecordBar, StudentBarcode, PrintTableModal });
+Object.assign(window, { Icon, HeroAvatar, Stat, Bar, LineChart, useStudents, BarcodeRecordBar, StudentBarcode, PrintTableModal });

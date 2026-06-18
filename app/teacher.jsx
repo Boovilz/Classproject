@@ -55,7 +55,6 @@ const TEACHER_NAV = [
   { key: 'students',   th: 'นักเรียน',           icon: 'users' },
   { key: 'attendance', th: 'เช็กชื่อ',           icon: 'calendar' },
   { key: 'classadmin', th: 'ธุรการชั้นเรียน',    icon: 'report' },
-  { key: 'behavior',   th: 'ความประพฤติ & XP',  icon: 'bolt' },
   { key: 'academic',   th: 'ผลการเรียน',        icon: 'book' },
   { key: 'homework',   th: 'การบ้าน',            icon: 'edit' },
   { key: 'finance',    th: 'การเงินห้องเรียน',   icon: 'coin' },
@@ -66,7 +65,7 @@ const TEACHER_NAV = [
   { key: 'settings',   th: 'ตั้งค่า',            icon: 'settings' },
 ];
 
-function TeacherShell({ route, setRoute, onPortal, onLogout, children }) {
+function TeacherShell({ route, setRoute, onLogout, children }) {
   const [cls, setCls] = React.useState(() => window.GC.getClass());
   const [showEdit, setShowEdit] = React.useState(false);
   const CLASS = cls;
@@ -126,11 +125,6 @@ function TeacherShell({ route, setRoute, onPortal, onLogout, children }) {
 
         <div style={{ flex: 1 }} />
 
-        <button onClick={onPortal} className="btn" style={{ justifyContent: 'flex-start', padding: '12px 14px',
-          background: 'linear-gradient(120deg, oklch(0.62 0.2 305), oklch(0.55 0.2 270))', color: '#fff' }}>
-          <Icon name="game" size={19} /> ไปโลกเกม <Icon name="arrowRight" size={16} color="#fff" style={{ marginLeft: 'auto' }} />
-        </button>
-
         <div className="row glass-2" style={{ gap: 10, padding: 10, borderRadius: 'var(--r-md)', marginTop: 4 }}>
           <div className="center" style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--navy)', color: '#fff', fontWeight: 700, fontFamily: 'var(--font-display)' }}>
             {CLASS.teacher.slice(-2, -1) || 'ค'}
@@ -171,20 +165,6 @@ function TeacherShell({ route, setRoute, onPortal, onLogout, children }) {
   );
 }
 
-function MiniMetric({ icon, label, value, color }) {
-  return (
-    <div className="row" style={{ gap: 10, flex: 1, minWidth: 0 }}>
-      <div className="center" style={{ width: 36, height: 36, borderRadius: 10, background: 'color-mix(in oklch,' + color + ' 16%,transparent)', color, flexShrink: 0 }}>
-        <Icon name={icon} size={17} />
-      </div>
-      <div style={{ minWidth: 0 }}>
-        <div className="display nowrap" style={{ fontSize: 19, color: 'var(--ink)', lineHeight: 1.1 }}>{value}</div>
-        <div className="nowrap" style={{ fontSize: 11.5, color: 'var(--muted)' }}>{label}</div>
-      </div>
-    </div>
-  );
-}
-
 function QuickActionBtn({ icon, label, color, onClick }) {
   return (
     <button onClick={onClick} className="col center glass-2" style={{ borderRadius: 'var(--r-md)', padding: '16px 10px', gap: 8, cursor: 'pointer', border: 'none', transition: 'transform .15s' }}
@@ -210,12 +190,8 @@ function TeacherDashboard({ openStudent, setRoute }) {
   const s = CLASS.summary;
   const presentPct = Math.round((s.present / CLASS.total) * 100);
   const alerts = STUDENTS.filter(st => st.health.nutrition !== 'สมส่วน' || st.status === 'sick' || st.status === 'absent');
-  const behavior = window.GC.getBehaviorSummary();
-  const xpCoin = window.GC.getXPCoinTotals();
   const subjectAvg = window.GC.getSubjectAverages();
   const events = window.GC.getUpcomingEvents(5);
-  const leaders = [...STUDENTS].sort((a, b) => (b.game.level * 1000 + b.game.xp) - (a.game.level * 1000 + a.game.xp)).slice(0, 5);
-  const medal = ['var(--rk-gold)', 'var(--rk-silver)', 'var(--rk-bronze)'];
 
   const go = (key) => { if (setRoute) setRoute(key); };
 
@@ -236,18 +212,11 @@ function TeacherDashboard({ openStudent, setRoute }) {
         </div>
       </div>
 
-      {/* 1-4: stat row — Total Students / Attendance / Behavior / XP & Coins */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16 }}>
+      {/* stat row */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16 }}>
         <Stat icon="users" label="นักเรียนทั้งหมด" value={CLASS.total} sub={CLASS.name} color="var(--royal)" />
         <Stat icon="check" label="มาเรียนวันนี้" value={s.present} sub={`${presentPct}% ของห้อง`} color="var(--emerald)" />
-        <Stat icon="star" label="คะแนนความประพฤติเฉลี่ย" value={behavior.avgStars} sub={`จาก ${behavior.maxStars} ดาว`} color="var(--orange)" />
-        <div className="glass" style={{ borderRadius: 'var(--r-lg)', padding: '18px 20px' }}>
-          <div className="nowrap" style={{ fontSize: 13, color: 'var(--muted)', fontWeight: 600, marginBottom: 10 }}>XP & เหรียญรวมห้อง</div>
-          <div className="row" style={{ gap: 10 }}>
-            <MiniMetric icon="bolt" label="XP สะสม" value={xpCoin.xp.toLocaleString()} color="var(--royal)" />
-            <MiniMetric icon="coin" label="เหรียญสะสม" value={xpCoin.coins.toLocaleString()} color="var(--orange)" />
-          </div>
-        </div>
+        <Stat icon="bell" label="รายการที่ต้องติดตาม" value={alerts.length} sub="สุขภาพ / การมาเรียน" color="var(--orange)" />
       </div>
 
       {/* 7-8: charts row — Student Performance / Attendance Analytics */}
@@ -327,43 +296,15 @@ function TeacherDashboard({ openStudent, setRoute }) {
         </div>
       </div>
 
-      {/* 9-10: leaderboard / quick actions */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 16 }}>
-        <div className="glass" style={{ borderRadius: 'var(--r-lg)', padding: '20px 24px' }}>
-          <div className="row" style={{ justifyContent: 'space-between', marginBottom: 14 }}>
-            <h3 style={{ fontSize: 16, color: 'var(--ink)' }}>กระดานผู้นำนักเรียนยอดเยี่ยม</h3>
-            <button onClick={() => go('behavior')} className="pill" style={{ background: 'var(--surface-2)', color: 'var(--muted)', border: 'none', cursor: 'pointer' }}>ดูทั้งหมด</button>
-          </div>
-          <div className="col" style={{ gap: 8 }}>
-            {leaders.map((st, i) => (
-              <div key={st.id} onClick={() => openStudent(st.id)} className="row" style={{ gap: 12, padding: '8px 4px', borderRadius: 'var(--r-md)', cursor: 'pointer' }}>
-                <span className="center display" style={{ width: 26, height: 26, borderRadius: 8, fontSize: 13, flexShrink: 0,
-                  background: i < 3 ? 'color-mix(in oklch,' + medal[i] + ' 22%,transparent)' : 'var(--surface-2)',
-                  color: i < 3 ? medal[i] : 'var(--muted)' }}>{i + 1}</span>
-                <HeroAvatar student={st} size={36} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div className="nowrap" style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--ink)' }}>{st.nick} · {st.name}</div>
-                  <div style={{ fontSize: 11.5, color: 'var(--muted)' }}>เลเวล {st.game.level} · {st.game.tier.th}</div>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <div className="display" style={{ fontSize: 13.5, color: 'var(--royal)' }}>{st.game.xp.toLocaleString()} XP</div>
-                  <div style={{ fontSize: 11, color: 'var(--orange)' }}>{st.game.coins.toLocaleString()} เหรียญ</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="glass" style={{ borderRadius: 'var(--r-lg)', padding: '20px 24px' }}>
-          <h3 style={{ fontSize: 16, color: 'var(--ink)', marginBottom: 14 }}>ดำเนินการด่วน</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10 }}>
-            <QuickActionBtn icon="check" label="เช็กชื่อวันนี้" color="var(--royal)" onClick={() => go('attendance')} />
-            <QuickActionBtn icon="bolt" label="มอบ XP/เหรียญ" color="var(--orange)" onClick={() => go('behavior')} />
-            <QuickActionBtn icon="users" label="เพิ่มนักเรียน" color="var(--emerald)" onClick={() => go('students')} />
-            <QuickActionBtn icon="coin" label="บันทึกการเงิน" color="var(--orange)" onClick={() => go('finance')} />
-            <QuickActionBtn icon="mail" label="ส่งประกาศ" color="var(--royal)" onClick={() => go('parent')} />
-            <QuickActionBtn icon="report" label="ออกรายงานผลการเรียน" color="var(--emerald)" onClick={() => go('academic')} />
-          </div>
+      {/* quick actions */}
+      <div className="glass" style={{ borderRadius: 'var(--r-lg)', padding: '20px 24px' }}>
+        <h3 style={{ fontSize: 16, color: 'var(--ink)', marginBottom: 14 }}>ดำเนินการด่วน</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 10 }}>
+          <QuickActionBtn icon="check" label="เช็กชื่อวันนี้" color="var(--royal)" onClick={() => go('attendance')} />
+          <QuickActionBtn icon="users" label="เพิ่มนักเรียน" color="var(--emerald)" onClick={() => go('students')} />
+          <QuickActionBtn icon="coin" label="บันทึกการเงิน" color="var(--orange)" onClick={() => go('finance')} />
+          <QuickActionBtn icon="mail" label="ส่งประกาศ" color="var(--royal)" onClick={() => go('parent')} />
+          <QuickActionBtn icon="report" label="ออกรายงานผลการเรียน" color="var(--emerald)" onClick={() => go('academic')} />
         </div>
       </div>
     </div>
@@ -444,269 +385,4 @@ function SettingsPage() {
     </div>
   );
 }
-
-/* ── shared compact barcode scanner panel ─────────────────── */
-const SCORE_TYPES = [
-  { key: 'xp',   label: 'XP',   color: 'var(--navy)',         icon: 'bolt'  },
-  { key: 'coin', label: 'Coin', color: 'var(--rk-gold)',      icon: 'star'  },
-  { key: 'star', label: 'Star', color: 'oklch(0.78 0.2 55)',  icon: 'spark' },
-];
-
-function BarcodePanel({ autoFocus = true, compact = false, onAward }) {
-  const [input,    setInput]    = React.useState('');
-  const [found,    setFound]    = React.useState(null);
-  const [notFound, setNotFound] = React.useState(false);
-  const [award,    setAward]    = React.useState({ type: 'xp', amount: '10', note: '' });
-  const [flash,    setFlash]    = React.useState(null);
-  const [recentLog, setRecentLog] = React.useState(() => window.GC.getScoreLog().slice(0, 5));
-  const inputRef = React.useRef();
-
-  React.useEffect(() => {
-    if (autoFocus) inputRef.current?.focus();
-    const refresh = () => setRecentLog(window.GC.getScoreLog().slice(0, 5));
-    window.addEventListener('gc:score-added', refresh);
-    return () => window.removeEventListener('gc:score-added', refresh);
-  }, []);
-
-  function lookup(val) {
-    const code = val.trim();
-    if (!code) return;
-    const st = window.GC.getStudents().find(s => s.code === code || s.id === code);
-    if (st) { setFound(st); setNotFound(false); }
-    else { setFound(null); setNotFound(true); setTimeout(() => setNotFound(false), 2000); }
-    setInput('');
-  }
-
-  function giveScore() {
-    if (!found) return;
-    const amt = +award.amount || 0;
-    if (!amt) return;
-    const entry = { studentId: found.id, studentCode: found.code, name: found.name, nick: found.nick, type: award.type, amount: amt, note: award.note };
-    window.GC.addScoreLog(entry);
-    setFlash({ nick: found.nick, type: award.type, amount: amt });
-    setTimeout(() => setFlash(null), 2500);
-    setFound(null);
-    setAward(a => ({ ...a, note: '' }));
-    inputRef.current?.focus();
-    if (onAward) onAward(entry);
-  }
-
-  const inp = (extra) => ({ style: { padding: '9px 12px', borderRadius: 'var(--r-md)', border: '1.5px solid var(--surface-2)', background: 'var(--surface-1)', color: 'var(--ink)', fontSize: 14, outline: 'none', ...extra } });
-
-  return (
-    <div className="col" style={{ gap: 12 }}>
-
-      {/* scan bar */}
-      <div className="row" style={{ gap: 8 }}>
-        <div className="center" style={{ width: 40, height: 40, borderRadius: 11, background: 'linear-gradient(135deg,var(--navy),var(--navy-2))', flexShrink: 0 }}>
-          <Icon name="report" size={20} color="#fff" />
-        </div>
-        <input ref={inputRef} {...inp({ flex: 1, fontSize: compact ? 14 : 18, padding: compact ? '8px 12px' : '10px 14px',
-          outline: notFound ? '2px solid var(--st-absent)' : found ? '2px solid var(--st-present)' : 'none' })}
-          placeholder="สแกนหรือพิมพ์รหัสนักเรียน แล้วกด Enter…"
-          value={input} onChange={e => setInput(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && lookup(input)}
-          autoComplete="off" />
-        <button className="btn" style={{ padding: '8px 16px', background: 'linear-gradient(120deg,var(--navy),var(--navy-2))', color: '#fff', flexShrink: 0 }}
-          onClick={() => lookup(input)}>
-          <Icon name="search" size={16} />
-        </button>
-      </div>
-      {notFound && <div style={{ color: 'var(--st-absent)', fontSize: 13, fontWeight: 600, paddingLeft: 48 }}>⚠️ ไม่พบรหัสนักเรียนนี้</div>}
-
-      {/* found: compact award row */}
-      {found && (
-        <div className="glass row" style={{ borderRadius: 'var(--r-lg)', padding: '12px 16px', gap: 12, alignItems: 'center', flexWrap: 'wrap', outline: '1.5px solid var(--st-present)' }}>
-          <HeroAvatar student={found} size={44} />
-          <div style={{ minWidth: 100 }}>
-            <div style={{ fontWeight: 700, color: 'var(--ink)', fontSize: 15, fontFamily: 'var(--font-display)' }}>{found.nick}</div>
-            <div style={{ fontSize: 11.5, color: 'var(--muted)' }}>#{found.code} · Lv.{found.game.level}</div>
-          </div>
-          {/* type pills */}
-          <div className="row" style={{ gap: 6 }}>
-            {SCORE_TYPES.map(t => (
-              <button key={t.key} onClick={() => setAward(a => ({ ...a, type: t.key }))} className="btn"
-                style={{ padding: '6px 13px', gap: 5, fontSize: 12.5, boxShadow: 'none',
-                  background: award.type === t.key ? t.color : 'var(--surface-2)',
-                  color: award.type === t.key ? '#fff' : 'var(--ink-soft)' }}>
-                <Icon name={t.icon} size={13} /> {t.label}
-              </button>
-            ))}
-          </div>
-          {/* amount */}
-          <input {...inp({ width: 70, textAlign: 'center', fontWeight: 700 })} type="number" min="1" max="9999"
-            value={award.amount} onChange={e => setAward(a => ({ ...a, amount: e.target.value }))} />
-          {/* note */}
-          <input {...inp({ flex: 1, minWidth: 100, fontSize: 13 })} placeholder="หมายเหตุ…"
-            value={award.note} onChange={e => setAward(a => ({ ...a, note: e.target.value }))} />
-          {/* give */}
-          <button className="btn" style={{ padding: '8px 18px', background: SCORE_TYPES.find(t => t.key === award.type)?.color, color: '#fff', fontWeight: 700, flexShrink: 0 }}
-            onClick={giveScore}>
-            <Icon name="bolt" size={15} /> มอบ
-          </button>
-          <button className="btn btn-ghost" style={{ padding: '8px 12px', flexShrink: 0 }} onClick={() => setFound(null)}>×</button>
-        </div>
-      )}
-
-      {/* recent mini log */}
-      {recentLog.length > 0 && (
-        <div className="col" style={{ gap: 4 }}>
-          <div style={{ fontSize: 11.5, color: 'var(--muted)', fontWeight: 600, paddingLeft: 2 }}>รางวัลล่าสุด</div>
-          {recentLog.map((e, i) => {
-            const t = SCORE_TYPES.find(x => x.key === e.type) || SCORE_TYPES[0];
-            return (
-              <div key={i} className="row" style={{ gap: 9, padding: '7px 10px', borderRadius: 'var(--r-md)', background: 'var(--surface-2)', alignItems: 'center' }}>
-                <Icon name={t.icon} size={14} color={t.color} />
-                <span style={{ fontWeight: 600, fontSize: 13, color: 'var(--ink)' }}>{e.nick}</span>
-                <span style={{ fontSize: 12, color: 'var(--muted)', flex: 1 }}>{e.note || ''}</span>
-                <span style={{ fontWeight: 800, color: t.color, fontSize: 13 }}>+{e.amount} {t.label}</span>
-                <span style={{ fontSize: 11, color: 'var(--muted)' }}>{new Date(e.at).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})}</span>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* award flash toast */}
-      {flash && (
-        <div style={{ position: 'fixed', top: 24, right: 24, zIndex: 500, padding: '14px 22px', borderRadius: 'var(--r-lg)',
-          background: 'linear-gradient(120deg,var(--navy),var(--navy-2))', color: '#fff', fontWeight: 700, fontSize: 16,
-          boxShadow: '0 8px 32px -8px var(--navy)', animation: 'portalText .4s ease-out', pointerEvents: 'none' }}>
-          ✅ {flash.nick} +{flash.amount} {flash.type.toUpperCase()}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function BehaviorXP({ openStudent }) {
-  const STUDENTS = useStudents();
-  const [sortBy, setSortBy] = React.useState('xp'); // xp | coins | stars
-  const SORTS = [
-    { key: 'xp',    th: 'XP',     icon: 'bolt',  color: 'var(--royal)'  },
-    { key: 'coins', th: 'เหรียญ', icon: 'coin',  color: 'var(--orange)' },
-    { key: 'stars', th: 'ดาว',    icon: 'star',  color: 'var(--emerald)' },
-  ];
-  const ranked = [...STUDENTS].sort((a, b) => (b.game[sortBy] || 0) - (a.game[sortBy] || 0));
-  const medal = ['var(--rk-gold)', 'var(--rk-silver)', 'var(--rk-bronze)'];
-  const active = SORTS.find(s => s.key === sortBy);
-
-  return (
-    <div className="col stagger" style={{ gap: 20 }}>
-      <div className="glass col" style={{ borderRadius: 'var(--r-xl)', padding: 24, gap: 16 }}>
-        <div className="row" style={{ gap: 10, alignItems: 'center', marginBottom: 4 }}>
-          <div className="center" style={{ width: 40, height: 40, borderRadius: 12, background: 'linear-gradient(135deg,var(--royal),var(--royal-2))' }}>
-            <Icon name="bolt" size={20} color="#fff" />
-          </div>
-          <div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--ink)' }}>มอบ XP / เหรียญ / ดาว</div>
-            <div style={{ fontSize: 12.5, color: 'var(--muted)' }}>สแกนหรือพิมพ์รหัสนักเรียนเพื่อให้รางวัลความประพฤติ</div>
-          </div>
-        </div>
-        <BarcodePanel autoFocus={false} compact />
-      </div>
-
-      <div className="glass col" style={{ borderRadius: 'var(--r-xl)', padding: 24, gap: 16 }}>
-        <div className="row" style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
-          <h3 style={{ fontSize: 16, color: 'var(--ink)' }}>กระดานผู้นำความประพฤติ & XP</h3>
-          <div className="row" style={{ gap: 6 }}>
-            {SORTS.map(s => (
-              <button key={s.key} onClick={() => setSortBy(s.key)} className="btn"
-                style={{ padding: '7px 14px', gap: 6, fontSize: 12.5, boxShadow: 'none',
-                  background: sortBy === s.key ? s.color : 'var(--surface-2)',
-                  color: sortBy === s.key ? '#fff' : 'var(--ink-soft)' }}>
-                <Icon name={s.icon} size={13} /> {s.th}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="col" style={{ gap: 8 }}>
-          {ranked.map((st, i) => (
-            <div key={st.id} onClick={() => openStudent && openStudent(st.id)} className="row glass-2"
-              style={{ gap: 12, padding: '10px 14px', borderRadius: 'var(--r-md)', cursor: 'pointer' }}>
-              <span className="center display" style={{ width: 26, height: 26, borderRadius: 8, fontSize: 13, flexShrink: 0,
-                background: i < 3 ? 'color-mix(in oklch,' + medal[i] + ' 22%,transparent)' : 'var(--surface-2)',
-                color: i < 3 ? medal[i] : 'var(--muted)' }}>{i + 1}</span>
-              <HeroAvatar student={st} size={38} />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div className="nowrap" style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--ink)' }}>{st.nick} · {st.name}</div>
-                <div style={{ fontSize: 11.5, color: 'var(--muted)' }}>เลเวล {st.game.level} · {st.game.tier.th} · เหรียญตรา {st.badges} ตรา</div>
-              </div>
-              <div className="display" style={{ fontSize: 16, color: active.color, flexShrink: 0 }}>
-                {(st.game[sortBy] || 0).toLocaleString()} {active.th}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function BarcodeScore() {
-  const [log, setLog] = React.useState(() => window.GC.getScoreLog());
-
-  React.useEffect(() => {
-    const refresh = () => setLog(window.GC.getScoreLog());
-    window.addEventListener('gc:score-added', refresh);
-    return () => window.removeEventListener('gc:score-added', refresh);
-  }, []);
-
-  return (
-    <div className="col" style={{ gap: 20, maxWidth: 820 }}>
-      <div style={{ fontSize: 13.5, color: 'var(--muted)' }}>
-        สแกนบาร์โค้ดหรือพิมพ์รหัสนักเรียน แล้วกด Enter เพื่อค้นหา
-      </div>
-
-      <div className="glass col" style={{ borderRadius: 'var(--r-xl)', padding: 24, gap: 16 }}>
-        <div className="row" style={{ gap: 10, alignItems: 'center', marginBottom: 4 }}>
-          <div className="center" style={{ width: 40, height: 40, borderRadius: 12, background: 'linear-gradient(135deg,var(--navy),var(--navy-2))' }}>
-            <Icon name="report" size={22} color="#fff" />
-          </div>
-          <div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--ink)' }}>สแกนรหัสนักเรียน</div>
-            <div style={{ fontSize: 12.5, color: 'var(--muted)' }}>รองรับเครื่องสแกนบาร์โค้ด USB และการพิมพ์ด้วยมือ</div>
-          </div>
-        </div>
-        <BarcodePanel autoFocus={true} />
-      </div>
-
-      {/* full score log */}
-      {log.length > 0 && (
-        <div className="glass col" style={{ borderRadius: 'var(--r-xl)', padding: 20, gap: 12 }}>
-          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--ink)' }}>ประวัติการมอบรางวัลทั้งหมด</div>
-          <div className="col" style={{ gap: 6, maxHeight: 360, overflowY: 'auto' }}>
-            {log.map((e, i) => {
-              const t = SCORE_TYPES.find(x => x.key === e.type) || SCORE_TYPES[0];
-              const dt = new Date(e.at);
-              return (
-                <div key={i} className="row" style={{ gap: 12, padding: '9px 12px', borderRadius: 'var(--r-md)', background: 'var(--surface-2)', alignItems: 'center' }}>
-                  <div className="center" style={{ width: 36, height: 36, borderRadius: 10, background: 'color-mix(in oklch,' + t.color + ' 16%,transparent)', color: t.color, flexShrink: 0 }}>
-                    <Icon name={t.icon} size={18} />
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div className="row" style={{ gap: 6 }}>
-                      <span style={{ fontWeight: 700, color: 'var(--ink)', fontSize: 13.5 }}>{e.nick}</span>
-                      <span style={{ color: 'var(--muted)', fontSize: 12 }}>#{e.studentCode}</span>
-                    </div>
-                    {e.note && <div style={{ fontSize: 12, color: 'var(--muted)' }}>{e.note}</div>}
-                  </div>
-                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    <div style={{ fontWeight: 800, color: t.color, fontSize: 15 }}>+{e.amount} {t.label}</div>
-                    <div style={{ fontSize: 11, color: 'var(--muted)' }}>{dt.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})}</div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          <button className="btn btn-ghost" style={{ alignSelf: 'flex-start', fontSize: 12.5 }}
-            onClick={() => { localStorage.removeItem('gcos.score.log'); setLog([]); }}>
-            ล้างประวัติ
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-Object.assign(window, { TeacherShell, TeacherDashboard, BarcodeScore, BarcodePanel, BehaviorXP, SettingsPage, TEACHER_NAV });
+Object.assign(window, { TeacherShell, TeacherDashboard, SettingsPage, TEACHER_NAV });

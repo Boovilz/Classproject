@@ -123,7 +123,7 @@ function EditStudentModal({ student, onClose }) {
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
   const inp = { style: { width: '100%', padding: '9px 12px', borderRadius: 'var(--r-md)', border: '1.5px solid var(--surface-2)', background: 'var(--surface-1)', color: 'var(--ink)', fontSize: 14, outline: 'none', boxSizing: 'border-box' } };
 
-  const previewStudent = { ...student, ...form, game: { ...student.game } };
+  const previewStudent = { ...student, ...form };
 
   function submit(e) {
     e.preventDefault();
@@ -546,11 +546,11 @@ function StudentsGrid({ openStudent }) {
   const TABS = [['all','ทั้งหมด'],['present','มาเรียน'],['watch','ติดตาม']];
 
   // exportable full roster — shared by CSV + PDF
-  const exportColumns = ['เลขที่', 'ชื่อ', 'ชื่อเล่น', 'เลขประจำตัว', 'สถานะ', 'เลเวล', 'BMI'];
+  const exportColumns = ['เลขที่', 'ชื่อ', 'ชื่อเล่น', 'เลขประจำตัว', 'สถานะ', 'BMI'];
   function buildExportRows() {
     return filtered.map(s => [
       String(s.no).padStart(2, '0'), s.name, s.nick, s.code || '',
-      (STATUSES[s.status] || STATUSES['present']).th, s.game.level, s.health.bmi,
+      (STATUSES[s.status] || STATUSES['present']).th, s.health.bmi,
     ]);
   }
   function exportCSV() {
@@ -613,7 +613,6 @@ function StudentsGrid({ openStudent }) {
                   {s.code && <div style={{ fontSize: 10.5, color: 'var(--muted)', marginTop: 2 }}>#{s.code}</div>}
                 </div>
                 <div className="row" style={{ gap: 12, fontSize: 12, color: 'var(--ink-soft)' }}>
-                  <span className="row" style={{ gap: 4 }}><Icon name="bolt" size={13} color="var(--navy)" /> Lv.{s.game.level}</span>
                   <span className="row" style={{ gap: 4 }}><Icon name="heart" size={13} color="var(--st-sick)" /> {s.health.bmi}</span>
                 </div>
               </div>

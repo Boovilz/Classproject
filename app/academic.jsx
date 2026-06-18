@@ -7,7 +7,7 @@ function AcademicRecords({ openStudent }) {
   const subjectAvg = window.GC.getSubjectAverages();
   const [sortKey, setSortKey] = React.useState(SUBJECTS[0].key);
 
-  const ranked = [...STUDENTS].sort((a, b) => (b.game.territories[sortKey] || 0) - (a.game.territories[sortKey] || 0));
+  const ranked = [...STUDENTS].sort((a, b) => (b.territories[sortKey] || 0) - (a.territories[sortKey] || 0));
   const gradeColor = v => v >= 80 ? 'var(--emerald)' : v >= 60 ? 'var(--orange)' : 'var(--st-absent)';
   const gradeLabel = v => v >= 80 ? 'ดีมาก' : v >= 60 ? 'ปานกลาง' : 'ควรพัฒนา';
 
@@ -45,7 +45,7 @@ function AcademicRecords({ openStudent }) {
 
         <div className="col" style={{ gap: 6 }}>
           {ranked.map((st, i) => {
-            const v = st.game.territories[sortKey] || 0;
+            const v = st.territories[sortKey] || 0;
             return (
               <div key={st.id} onClick={() => openStudent && openStudent(st.id)} className="row glass-2"
                 style={{ gap: 12, padding: '10px 14px', borderRadius: 'var(--r-md)', cursor: 'pointer', alignItems: 'center' }}>

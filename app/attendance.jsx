@@ -25,13 +25,8 @@ function Attendance({ openStudent }) {
   // current attendance rows
   const [rows, setRows] = React.useState(() => getAttendance(selDate));
   const [dirty, setDirty] = React.useState(false);
-  const [showBarcode, setShowBarcode] = React.useState(false);
   const [showScanAttend, setShowScanAttend] = React.useState(false);
   const [showPrint, setShowPrint] = React.useState(false);
-  const [awardRow, setAwardRow] = React.useState(null); // student id
-  const [awardType, setAwardType] = React.useState('xp');
-  const [awardAmt, setAwardAmt] = React.useState(10);
-  const [awardToast, setAwardToast] = React.useState(null);
   const [scanToast, setScanToast] = React.useState(null);
 
   // scanning a student's barcode (เลขประจำตัวนักเรียน) marks them present and
@@ -45,15 +40,6 @@ function Attendance({ openStudent }) {
     setDirty(false);
     setScanToast(`มาเรียน ✓ ${st.nick}`);
     setTimeout(() => setScanToast(null), 2000);
-  }
-
-  function doAward(studentId) {
-    const st = student(studentId);
-    if (!st) return;
-    window.GC.addScoreLog({ studentId, studentName: st.name, type: awardType, amount: awardAmt, note: 'จากเช็คชื่อ' });
-    setAwardToast(`+${awardAmt} ${awardType.toUpperCase()} → ${st.nick}`);
-    setTimeout(() => setAwardToast(null), 2500);
-    setAwardRow(null);
   }
 
   // reload rows when date changes
@@ -127,14 +113,6 @@ function Attendance({ openStudent }) {
 
   return (
     <div className="col" style={{ gap: 18 }}>
-      {awardToast && (
-        <div style={{ position: 'fixed', bottom: 32, left: '50%', transform: 'translateX(-50%)', zIndex: 9999,
-          background: 'linear-gradient(120deg,var(--gold),oklch(0.72 0.16 55))', color: '#1a1200',
-          padding: '10px 22px', borderRadius: 99, fontWeight: 700, fontSize: 14,
-          boxShadow: '0 8px 32px -8px var(--gold)', animation: 'rise .2s ease-out' }}>
-          ⚡ {awardToast}
-        </div>
-      )}
       {scanToast && (
         <div style={{ position: 'fixed', bottom: 32, left: '50%', transform: 'translateX(-50%)', zIndex: 9999,
           background: 'linear-gradient(120deg,var(--st-present),oklch(0.62 0.16 150))', color: '#fff',
@@ -222,13 +200,6 @@ function Attendance({ openStudent }) {
               <Icon name="download" size={15} color={dirty ? '#fff' : 'var(--muted)'} />
               {dirty ? 'บันทึก *' : 'บันทึกแล้ว'}
             </button>
-            <button onClick={() => setShowBarcode(b => !b)} className="btn"
-              style={{ padding: '7px 14px', fontSize: 12.5,
-                background: showBarcode ? 'linear-gradient(120deg,oklch(0.52 0.19 265),oklch(0.48 0.2 280))' : 'var(--surface-2)',
-                color: showBarcode ? '#fff' : 'var(--ink-soft)' }}>
-              <Icon name="report" size={15} color={showBarcode ? '#fff' : 'var(--ink-soft)'} />
-              {showBarcode ? 'ซ่อนบาร์โค้ด' : 'บันทึกคะแนน 🔲'}
-            </button>
             <button onClick={() => setShowScanAttend(b => !b)} className="btn"
               style={{ padding: '7px 14px', fontSize: 12.5,
                 background: showScanAttend ? 'linear-gradient(120deg,var(--st-present),oklch(0.62 0.16 150))' : 'var(--surface-2)',
@@ -257,20 +228,6 @@ function Attendance({ openStudent }) {
         </div>
       </div>
 
-      {/* barcode panel — inline toggle */}
-      {showBarcode && (
-        <div className="glass col" style={{ borderRadius: 'var(--r-lg)', padding: 18, gap: 10,
-          borderLeft: '3px solid oklch(0.52 0.19 265)', animation: 'rise .2s ease-out' }}>
-          <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--ink)' }}>
-              <Icon name="report" size={16} /> บันทึกคะแนนด้วยบาร์โค้ด
-            </div>
-            <span style={{ fontSize: 12, color: 'var(--muted)' }}>สแกนหรือพิมพ์รหัส → กด Enter → มอบคะแนน</span>
-          </div>
-          <BarcodePanel compact={true} autoFocus={false} />
-        </div>
-      )}
-
       {/* scan-to-attend panel — scanning a student's เลขประจำตัวนักเรียน marks
           them present and saves immediately, no extra confirmation needed */}
       {showScanAttend && (
@@ -298,10 +255,6 @@ function Attendance({ openStudent }) {
               <span>{STATUSES[k].short}</span>
             </div>
           ))}
-          <div className="center" style={{ width: 56, flexDirection: 'column', gap: 4 }}>
-            <Icon name="bolt" size={16} color="var(--gold)" />
-            <span style={{ color: 'var(--gold)', fontSize: 10 }}>คะแนน</span>
-          </div>
         </div>
         <div>
           {rows.map((r, i) => {
@@ -310,7 +263,7 @@ function Attendance({ openStudent }) {
             return (
               <React.Fragment key={r.id}>
               <div className="row"
-                style={{ padding: '10px 20px', borderBottom: awardRow === r.id ? 'none' : (i < rows.length - 1 ? '1px solid var(--line-soft)' : 'none'),
+                style={{ padding: '10px 20px', borderBottom: i < rows.length - 1 ? '1px solid var(--line-soft)' : 'none',
                   background: i % 2 ? 'transparent' : 'var(--surface-2)' }}>
                 <div className="tech" style={{ width: 38, color: 'var(--muted)', fontSize: 14 }}>{String(st.no).padStart(2, '0')}</div>
                 <div className="row" style={{ flex: 1, gap: 11, cursor: 'pointer' }} onClick={() => openStudent(st.id)}>
@@ -335,42 +288,7 @@ function Attendance({ openStudent }) {
                     </div>
                   );
                 })}
-                {/* per-student score button */}
-                <div className="center" style={{ width: 56 }}>
-                  <button onClick={() => setAwardRow(awardRow === r.id ? null : r.id)} className="center"
-                    style={{ width: 32, height: 32, borderRadius: 9, cursor: 'pointer', border: 'none',
-                      background: awardRow === r.id ? 'var(--gold)' : 'color-mix(in oklch,var(--gold) 16%,transparent)',
-                      color: awardRow === r.id ? '#1a1200' : 'var(--gold)', transition: 'all .18s' }}>
-                    <Icon name="bolt" size={16} color={awardRow === r.id ? '#1a1200' : 'var(--gold)'} />
-                  </button>
-                </div>
               </div>
-              {/* inline award expand */}
-              {awardRow === r.id && (
-                <div className="row" style={{ padding: '10px 20px 12px', gap: 10, background: 'color-mix(in oklch,var(--gold) 8%,transparent)', borderTop: '1px dashed color-mix(in oklch,var(--gold) 30%,transparent)', flexWrap: 'wrap', alignItems: 'center' }}>
-                  <span style={{ fontSize: 13, color: 'var(--gold)', fontWeight: 600 }}>มอบให้ {st.nick}</span>
-                  <div className="row" style={{ gap: 4 }}>
-                    {[['xp','⚡ XP'],['coin','🪙 Coin'],['star','⭐ Star']].map(([t,l]) => (
-                      <button key={t} onClick={() => setAwardType(t)} className="btn"
-                        style={{ padding: '5px 11px', fontSize: 12, background: awardType === t ? 'var(--navy)' : 'var(--surface-2)', color: awardType === t ? '#fff' : 'var(--ink-soft)' }}>
-                        {l}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="row" style={{ gap: 4 }}>
-                    {[5,10,20,50].map(v => (
-                      <button key={v} onClick={() => setAwardAmt(v)} className="btn"
-                        style={{ padding: '5px 10px', fontSize: 12, background: awardAmt === v ? 'var(--gold)' : 'var(--surface-2)', color: awardAmt === v ? '#1a1200' : 'var(--ink-soft)' }}>
-                        +{v}
-                      </button>
-                    ))}
-                  </div>
-                  <button onClick={() => doAward(r.id)} className="btn"
-                    style={{ padding: '7px 16px', fontSize: 13, background: 'linear-gradient(120deg,var(--gold),oklch(0.72 0.16 55))', color: '#1a1200', fontWeight: 700 }}>
-                    มอบ +{awardAmt}
-                  </button>
-                </div>
-              )}
               </React.Fragment>
             );
           })}

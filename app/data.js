@@ -1,5 +1,5 @@
 /* ============================================================
-   GAMIFIED CLASSROOM OS — data layer
+   CLASSROOM OS — data layer
    Static config + seed data stay local. Everything a teacher edits
    (roster, attendance, homework, finance, announcements, ...) is
    backed by Supabase (Postgres + Realtime) so it is shared across
@@ -31,51 +31,16 @@
     leave:    { th: 'ลา', color: 'var(--muted)', icon: 'note' },
   };
 
-  // ---- ranks ----
-  const RANKS = [
-    { key: 'bronze',   th: 'บรอนซ์',   color: 'var(--rk-bronze)' },
-    { key: 'silver',   th: 'ซิลเวอร์', color: 'var(--rk-silver)' },
-    { key: 'gold',     th: 'โกลด์',    color: 'var(--rk-gold)' },
-    { key: 'platinum', th: 'แพลทินัม', color: 'var(--rk-platinum)' },
-    { key: 'diamond',  th: 'ไดมอนด์',  color: 'var(--rk-diamond)' },
-    { key: 'master',   th: 'มาสเตอร์', color: 'var(--rk-master)' },
-  ];
-
-  // ---- level tiers ----
-  const TIERS = [
-    { from: 1,  th: 'มือใหม่',   en: 'Novice' },
-    { from: 5,  th: 'นักสำรวจ', en: 'Explorer' },
-    { from: 10, th: 'นักรบ',     en: 'Warrior' },
-    { from: 20, th: 'จอมยุทธ์',  en: 'Master' },
-  ];
-  function tierOf(level) {
-    let t = TIERS[0];
-    for (const x of TIERS) if (level >= x.from) t = x;
-    return t;
-  }
-
-  // ---- 8 subject territories ----
+  // ---- 8 subjects (academic performance by subject) ----
   const SUBJECTS = [
-    { key: 'thai',    th: 'ภาษาไทย',          realm: 'ป่าอักษรา',        icon: 'book',    hue: 12,  pos: [50, 18] },
-    { key: 'math',    th: 'คณิตศาสตร์',       realm: 'อาณาจักรคณิต',     icon: 'calc',    hue: 265, pos: [70, 30] },
-    { key: 'sci',     th: 'วิทยาศาสตร์',      realm: 'หุบเขาวิทยา',      icon: 'flask',   hue: 160, pos: [30, 34] },
-    { key: 'social',  th: 'สังคมศึกษา',       realm: 'อารยธรรมสังคม',    icon: 'globe',   hue: 200, pos: [62, 50] },
-    { key: 'eng',     th: 'ภาษาอังกฤษ',       realm: 'ท่าเรืออังกฤษ',     icon: 'lang',    hue: 305, pos: [34, 56] },
-    { key: 'art',     th: 'ศิลปะ',            realm: 'เกาะศิลปะ',        icon: 'brush',   hue: 330, pos: [54, 70] },
-    { key: 'pe',      th: 'สุขศึกษา · พลศึกษา', realm: 'ขุนเขาสุขภาพ',     icon: 'run',   hue: 88,  pos: [40, 80] },
-    { key: 'career',  th: 'การงานอาชีพ',      realm: 'เมืองเทคโนโลยี',    icon: 'tool',    hue: 230, pos: [60, 88] },
-  ];
-
-  // ---- reward shop ----
-  const REWARDS = [
-    { id: 'r1', th: 'หัวหน้าห้อง 1 วัน',    cat: 'privilege', cost: 120, cur: 'coin', icon: 'crown', stock: 1 },
-    { id: 'r2', th: 'เลือกที่นั่งเอง',       cat: 'privilege', cost: 80,  cur: 'coin', icon: 'seat',  stock: 3 },
-    { id: 'r3', th: 'การ์ดข้ามการบ้าน 1 ครั้ง', cat: 'privilege', cost: 200, cur: 'coin', icon: 'card', stock: 5 },
-    { id: 'r4', th: 'กรอบอวตารทองคำ',       cat: 'cosmetic',  cost: 15,  cur: 'star', icon: 'frame', stock: 99 },
-    { id: 'r5', th: 'เอฟเฟกต์ออร่านีออน',   cat: 'cosmetic',  cost: 25,  cur: 'star', icon: 'spark', stock: 99 },
-    { id: 'r6', th: 'ขนมพิเศษวันศุกร์',     cat: 'benefit',   cost: 60,  cur: 'coin', icon: 'gift',  stock: 8 },
-    { id: 'r7', th: 'เลือกเพลงเปิดเช้า',     cat: 'benefit',   cost: 40,  cur: 'coin', icon: 'music', stock: 10 },
-    { id: 'r8', th: 'ฉายาพิเศษในเกม',       cat: 'cosmetic',  cost: 30,  cur: 'star', icon: 'tag',   stock: 99 },
+    { key: 'thai',    th: 'ภาษาไทย',          icon: 'book',  hue: 12,  pos: [50, 18] },
+    { key: 'math',    th: 'คณิตศาสตร์',       icon: 'calc',  hue: 265, pos: [70, 30] },
+    { key: 'sci',     th: 'วิทยาศาสตร์',      icon: 'flask', hue: 160, pos: [30, 34] },
+    { key: 'social',  th: 'สังคมศึกษา',       icon: 'globe', hue: 200, pos: [62, 50] },
+    { key: 'eng',     th: 'ภาษาอังกฤษ',       icon: 'lang',  hue: 305, pos: [34, 56] },
+    { key: 'art',     th: 'ศิลปะ',            icon: 'brush', hue: 330, pos: [54, 70] },
+    { key: 'pe',      th: 'สุขศึกษา · พลศึกษา', icon: 'run', hue: 88,  pos: [40, 80] },
+    { key: 'career',  th: 'การงานอาชีพ',      icon: 'tool',  hue: 230, pos: [60, 88] },
   ];
 
   // ---- students (seed — used only to bootstrap a brand-new Supabase project) ----
@@ -112,19 +77,7 @@
     }));
   }
 
-  // ---- guilds ----
-  const GUILDS = [
-    { key: 'fire',  th: 'กิลด์เพลิง', en: 'Fire Guild',  icon: 'fire',  hue: 22,  color: 'oklch(0.7 0.22 28)'  },
-    { key: 'water', th: 'กิลด์น้ำ',   en: 'Water Guild', icon: 'drop',  hue: 220, color: 'oklch(0.7 0.18 225)' },
-    { key: 'wind',  th: 'กิลด์ลม',    en: 'Wind Guild',  icon: 'spark', hue: 155, color: 'oklch(0.7 0.18 155)' },
-    { key: 'earth', th: 'กิลด์ดิน',   en: 'Earth Guild', icon: 'map',   hue: 88,  color: 'oklch(0.7 0.18 88)'  },
-  ];
-
   const SEED_STUDENTS = NAMES.map((n, i) => {
-    const level = [12,18,7,15,5,21,9,11,24,8,3,16,13,6,19,10][i];
-    const xp = seeded(i, 120, 940);
-    const xpMax = 1000;
-    const rankIdx = Math.min(5, Math.floor(level / 4.2));
     const h = +(118 + seeded(i, 0, 16) + i * 0.4).toFixed(0);
     const w = +(20 + seeded(i + 5, 0, 10) + i * 0.25).toFixed(1);
     const bmi = +(w / Math.pow(h / 100, 2)).toFixed(1);
@@ -141,23 +94,13 @@
       health: { w, h, bmi, nutrition,
         weightHist: growth(i, w - 1.6, 0.32),
         heightHist: growth(i + 2, h - 2.2, 0.45) },
-      game: {
-        level, xp, xpMax,
-        rank: RANKS[rankIdx].key, rankIdx,
-        stars: seeded(i + 3, 2, 48),
-        coins: seeded(i + 7, 40, 620),
-        tier: tierOf(level),
-        territories: terr,
-        hue: (i * 41) % 360,
-      },
-      badges: seeded(i, 1, 9),
-      guild: GUILDS[i % 4].key,
+      territories: terr,
       custom: false,
       deleted: false,
     };
   });
 
-  // class-level derived stats (from the seed roster — used for the static SEASON/ACHIEVEMENTS snapshot below)
+  // class-level derived stats (from the seed roster)
   function countStatus(k) { return SEED_STUDENTS.filter(s => s.status === k).length; }
   const CLASS_SEED = {
     name: 'ป.4/2', room: 'อาคาร 2 ห้อง 204',
@@ -184,157 +127,6 @@
   const WEEK_TREND = [
     { d: 'จ.', present: 15 }, { d: 'อ.', present: 14 }, { d: 'พ.', present: 16 },
     { d: 'พฤ.', present: 13 }, { d: 'ศ.', present: 15 },
-  ];
-
-  // ---- class total power / level ----
-  const CLASS_XP = SEED_STUDENTS.reduce((a, s) => a + s.game.level * 1000 + s.game.xp, 0);
-  const CLASS_LEVEL = Math.floor(CLASS_XP / 8000) + 1;
-
-  // ---- season ----
-  const SEASON = {
-    no: 1, th: 'การเดินทางสู่อาณาจักรคณิต', en: 'The Math Kingdom Expedition',
-    day: 18, days: 45, xp: CLASS_XP, goal: 260000, icon: 'calc', hue: 265,
-  };
-
-  // ---- class pet (mascot raised by the whole class) ----
-  const PET = {
-    name: 'มังกรน้อยเลขเก่ง', species: 'มังกร', level: 6, xp: 340, xpMax: 500,
-    stage: 'วัยเด็ก', mood: 'ร่าเริง', icon: 'fire', hue: 150, fedToday: 11,
-  };
-
-  // ---- quests ----
-  const QUESTS = {
-    daily: [
-      { id: 'd1', th: 'มาเรียนตรงเวลา',        icon: 'clock',  cur: 0, max: 1, reward: { xp: 20 } },
-      { id: 'd2', th: 'ตอบคำถามในห้อง 3 ครั้ง',  icon: 'spark',  cur: 0, max: 3, reward: { xp: 30 } },
-      { id: 'd3', th: 'ช่วยเหลือเพื่อน',         icon: 'heart',  cur: 0, max: 1, reward: { star: 1 } },
-      { id: 'd4', th: 'ส่งการบ้านครบ',          icon: 'report', cur: 0, max: 1, reward: { coin: 15 } },
-    ],
-    weekly: [
-      { id: 'w1', th: 'มาเรียนครบ 5 วัน',        icon: 'calendar', cur: 0, max: 5, reward: { xp: 120 } },
-      { id: 'w2', th: 'อ่านหนังสือ 3 เล่ม',       icon: 'book',     cur: 0, max: 3, reward: { star: 5 } },
-      { id: 'w3', th: 'สะสมแต้มกิจกรรม 200',      icon: 'bolt',     cur: 0, max: 200, reward: { coin: 80 } },
-    ],
-    season: [
-      { id: 's1', th: 'พิชิตดินแดนคณิต 100%',     icon: 'calc',   cur: 0, max: 100, reward: { xp: 500 } },
-      { id: 's2', th: 'ปราบบอสคณิตทั้งห้อง',      icon: 'shield', cur: 0, max: 1, reward: { badge: 'ตราปราบบอส' } },
-      { id: 's3', th: 'มีสมาชิกขึ้น Hall of Fame', icon: 'trophy', cur: 0, max: 3, reward: { badge: 'ตราเกียรติยศ' } },
-    ],
-  };
-
-  // ---- hall of fame achievement categories (static snapshot from the seed roster) ----
-  function topBySeed(fn) { return [...SEED_STUDENTS].sort((a, b) => fn(b) - fn(a))[0]; }
-  const ACHIEVEMENTS = [
-    { key: 'mvp',     th: 'MVP ประจำสัปดาห์', icon: 'crown',  hue: 50,  holder: topBySeed(s => s.game.level * 1000 + s.game.xp) },
-    { key: 'helper',  th: 'ผู้ช่วยยอดเยี่ยม',  icon: 'heart',  hue: 350, holder: topBySeed(s => s.game.stars) },
-    { key: 'reader',  th: 'นักอ่านแห่งปี',     icon: 'book',   hue: 200, holder: topBySeed(s => s.game.territories.thai) },
-    { key: 'solver',  th: 'นักแก้ปัญหา',       icon: 'calc',   hue: 265, holder: topBySeed(s => s.game.territories.math) },
-    { key: 'attend',  th: 'ฮีโร่มาเรียน',      icon: 'check',  hue: 150, holder: topBySeed(s => (s.status === 'present' ? 1 : 0) * 100 + s.badges) },
-    { key: 'coder',   th: 'ฮีโร่โค้ดดิ้ง',     icon: 'tool',   hue: 230, holder: topBySeed(s => s.game.territories.career) },
-  ];
-
-  // ---- pet mood (computed from live class data) ----
-  const PET_MOODS = [
-    { key: 'excited', th: 'ร่าเริงมาก', emoji: '🤩', hue: 88,  msg: 'พลังงานเต็มร้อย! ห้องเรียนยอดเยี่ยม' },
-    { key: 'happy',   th: 'มีความสุข',  emoji: '😊', hue: 150, msg: 'อารมณ์ดี ทุกคนมาครบ' },
-    { key: 'normal',  th: 'ปกติ',       emoji: '🙂', hue: 200, msg: 'สบายดี ไม่มีอะไรพิเศษ' },
-    { key: 'hungry',  th: 'หิวโหย',    emoji: '😋', hue: 30,  msg: 'ยังไม่ได้รับ XP วันนี้เลย!' },
-    { key: 'sleepy',  th: 'ง่วงนอน',   emoji: '😴', hue: 265, msg: 'มีคนขาดเรียนเยอะ...' },
-    { key: 'sad',     th: 'เศร้า',      emoji: '😢', hue: 220, msg: 'ห้องเรียนเงียบเหงาจัง' },
-  ];
-  function getPetMood() {
-    const ss = getStudents();
-    const today = dateKey(new Date());
-    const log = getScoreLog();
-    const todayXP = log.filter(function(e) { return e.type === 'xp' && e.at && new Date(Number(e.at)).toISOString().slice(0,10) === today; })
-      .reduce(function(a,e) { return a + (Number(e.amount)||0); }, 0);
-    const presentCount = ss.filter(function(s) { return s.status === 'present' || s.status === 'late' || s.status === 'activity'; }).length;
-    const rate = ss.length ? presentCount / ss.length : 0;
-    if (rate >= 0.9 && todayXP >= 100) return PET_MOODS[0];
-    if (rate >= 0.7 && todayXP >= 20)  return PET_MOODS[1];
-    if (rate < 0.5)                    return PET_MOODS[4];
-    if (todayXP === 0)                 return PET_MOODS[3];
-    if (rate < 0.6)                    return PET_MOODS[5];
-    return PET_MOODS[2];
-  }
-
-  // ---- boss skills (ephemeral session flair — stays local, not classroom record data) ----
-  const BOSS_SKILLS = [
-    { key: 'chaos_storm', th: 'พายุแห่งความโกลาหล', en: 'Chaos Storm',  desc: 'ลด HP ทีม 10% ทันที',      icon: 'spark',  hue: 305, duration: 0 },
-    { key: 'shield_mode', th: 'โหมดโล่เหล็ก',       en: 'Shield Mode',  desc: 'ดาเมจลดครึ่งหนึ่ง 1 วัน',  icon: 'shield', hue: 200, duration: 1 },
-    { key: 'rage',        th: 'ความพิโรธราชันย์',    en: 'Rage Mode',    desc: 'บอสโจมตีแรงขึ้น ×2',        icon: 'fire',   hue: 22,  duration: 2 },
-    { key: 'heal',        th: 'ดูดกลืนชีวิต',        en: 'Life Drain',   desc: 'บอสฟื้น HP 15%',            icon: 'heart',  hue: 350, duration: 0 },
-  ];
-  const LS_BOSS_SKILL = 'gcos.boss.skill';
-  function getActiveBossSkill() {
-    try {
-      var d = JSON.parse(localStorage.getItem(LS_BOSS_SKILL));
-      if (!d) return null;
-      if (d.expiresAt && new Date() > new Date(d.expiresAt)) { localStorage.removeItem(LS_BOSS_SKILL); return null; }
-      return d;
-    } catch(e) { return null; }
-  }
-  function triggerBossSkill(skillKey) {
-    var skill = BOSS_SKILLS.find(function(s){ return s.key === skillKey; });
-    if (!skill) return;
-    var expiresAt = skill.duration > 0 ? new Date(Date.now() + skill.duration * 86400000).toISOString() : null;
-    localStorage.setItem(LS_BOSS_SKILL, JSON.stringify(Object.assign({}, skill, { triggeredAt: new Date().toISOString(), expiresAt: expiresAt })));
-    window.dispatchEvent(new CustomEvent('gc:students-changed'));
-  }
-  function clearBossSkill() {
-    localStorage.removeItem(LS_BOSS_SKILL);
-    window.dispatchEvent(new CustomEvent('gc:students-changed'));
-  }
-
-  // ---- boss battle (cooperative classroom event) ----
-  const BOSS = {
-    name: 'ราชันย์สมการ', en: 'The Equation Tyrant', subject: 'คณิตศาสตร์',
-    hp: 3120, hpMax: 5000, icon: 'fire', hue: 22, ends: 'อีก 2 วัน', element: 'อสูรพีชคณิต',
-    attacks: [
-      { th: 'ตอบถูกในคาบเรียน', dmg: 25, icon: 'spark' },
-      { th: 'ส่งการบ้านครบทั้งกลุ่ม', dmg: 60, icon: 'report' },
-      { th: 'ชนะมินิเกมคณิต', dmg: 40, icon: 'game' },
-      { th: 'ช่วยติวเพื่อน', dmg: 35, icon: 'heart' },
-    ],
-    feed: [
-      { who: 2, dmg: 60, act: 'ส่งการบ้านครบทั้งกลุ่ม', t: 'เมื่อสักครู่' },
-      { who: 5, dmg: 40, act: 'ชนะมินิเกมคณิต', t: '1 นาทีที่แล้ว' },
-      { who: 0, dmg: 25, act: 'ตอบถูกในคาบเรียน', t: '3 นาทีที่แล้ว' },
-      { who: 8, dmg: 35, act: 'ช่วยติวเพื่อน', t: '4 นาทีที่แล้ว' },
-      { who: 3, dmg: 25, act: 'ตอบถูกในคาบเรียน', t: '6 นาทีที่แล้ว' },
-    ],
-    rewards: [
-      { th: 'ทั้งห้อง +500 XP', icon: 'bolt', hue: 200 },
-      { th: 'ตราปราบราชันย์', icon: 'shield', hue: 22 },
-      { th: 'กล่องสมบัติฤดูกาล', icon: 'gift', hue: 88 },
-    ],
-  };
-
-  // ---- seasons (progression belongs to a season) ----
-  const SEASONS = [
-    { no: 1, th: 'การเดินทางสู่อาณาจักรคณิต', en: 'The Math Kingdom Expedition', state: 'active',  icon: 'calc',  hue: 265 },
-    { no: 2, th: 'ลีกนักสำรวจวิทยาศาสตร์',     en: 'Science Explorer League',     state: 'locked',  icon: 'spark', hue: 160 },
-    { no: 3, th: 'มหาสมุทรภาษาแห่งโลกกว้าง',   en: 'Language Ocean Voyage',       state: 'locked',  icon: 'book',  hue: 200 },
-  ];
-  const SEASON_TRACK = [
-    { at: 0,      th: 'เปิดฤดูกาล',          icon: 'flag',   reward: 'ปลดล็อกดินแดนคณิต' },
-    { at: 60000,  th: 'ด่านที่ 1 สำเร็จ',     icon: 'star',   reward: '+สติกเกอร์ฤดูกาล' },
-    { at: 120000, th: 'ปลุกสัตว์เลี้ยงห้อง',   icon: 'fire',   reward: 'มังกรเลื่อนขั้น' },
-    { at: 180000, th: 'เปิดศึกบอสราชันย์',     icon: 'shield', reward: 'ปลดล็อกบอสใหญ่' },
-    { at: 230000, th: 'รางวัลใหญ่ฤดูกาล',     icon: 'gift',   reward: 'กล่องสมบัติทองคำ' },
-    { at: 260000, th: 'พิชิตฤดูกาล',          icon: 'crown',  reward: 'ตราแชมป์ฤดูกาล' },
-  ];
-
-  // ---- kingdom map zones ----
-  const KINGDOM_ZONES = [
-    { key: 'castle',    th: 'ปราสาทหลวง',    sub: 'ศูนย์กลางอาณาจักร', route: null,        icon: 'crown',  hue: 50,  pos: [50, 47], size: 'lg' },
-    { key: 'status',    th: 'หอสังเกตการณ์', sub: 'สถานะสด',          route: 'status',    icon: 'bolt',   hue: 200, pos: [50, 16] },
-    { key: 'territory', th: 'ดินแดนความรู้', sub: '8 วิชา',           route: 'territory', icon: 'map',    hue: 160, pos: [20, 28] },
-    { key: 'arena',     th: 'สนามประลอง',    sub: 'มินิเกม',          route: 'games',     icon: 'game',   hue: 305, pos: [80, 28] },
-    { key: 'quests',    th: 'กระดานเควสต์',  sub: 'ภารกิจ',           route: 'quests',    icon: 'report', hue: 25,  pos: [15, 64] },
-    { key: 'hall',      th: 'หอเกียรติยศ',   sub: 'Hall of Fame',     route: 'hall',      icon: 'trophy', hue: 50,  pos: [85, 64] },
-    { key: 'shop',      th: 'ตลาดรางวัล',    sub: 'ร้านค้า',          route: 'shop',      icon: 'shop',   hue: 88,  pos: [33, 82] },
-    { key: 'guild',     th: 'หอสมาคม',       sub: 'การ์ดฮีโร่',        route: 'guild',     icon: 'users',  hue: 270, pos: [67, 82] },
   ];
 
   /* ============================================================
@@ -447,10 +239,7 @@
       status: 'present', live: 'present',
       welfare: { milk: false, brush: false, lunch: false },
       health: { w, h, bmi, nutrition, weightHist: [], heightHist: [] },
-      game: { level: 1, xp: 0, xpMax: 1000, rank: 'bronze', rankIdx: 0,
-        stars: 0, coins: 0, tier: tierOf(1), territories: terr,
-        hue: Math.floor(Math.random() * 360) },
-      badges: 0,
+      territories: terr,
       custom: true,
       deleted: false,
     };
@@ -480,43 +269,6 @@
     if (data.health) next.health = Object.assign({}, row.health, data.health);
     if (data.welfare) next.welfare = Object.assign({}, row.welfare, data.welfare);
     studentsStore.upsert(next);
-  }
-
-  // ---- score log (XP / coin / star awards — also updates the student's live game stats) ----
-  const scoreLogStore = makeStore('score_log', ['id'], 'gc:scorelog-changed', []);
-
-  function getScoreLog() {
-    return [...scoreLogStore.list()].sort(function (a, b) { return (Number(b.at) || 0) - (Number(a.at) || 0); });
-  }
-
-  function addScoreLog(entry) {
-    const at = Date.now();
-    const row = Object.assign({}, entry, { id: 'SC' + at + Math.random().toString(36).slice(2, 7), at: at });
-    scoreLogStore.upsert(row);
-
-    if (entry.studentId) {
-      const s = studentsStore.list().find(function (x) { return x.id === entry.studentId; });
-      if (s) {
-        const game = Object.assign({}, s.game);
-        const amt = Number(entry.amount) || 0;
-        if (entry.type === 'xp') {
-          game.xp = (game.xp || 0) + amt;
-          while (game.xp >= (game.xpMax || 1000)) {
-            game.xp -= (game.xpMax || 1000);
-            game.level = (game.level || 1) + 1;
-            game.tier = tierOf(game.level);
-            game.rankIdx = Math.min(5, Math.floor(game.level / 4.2));
-            game.rank = RANKS[game.rankIdx].key;
-          }
-        } else if (entry.type === 'coin') {
-          game.coins = (game.coins || 0) + amt;
-        } else if (entry.type === 'star') {
-          game.stars = (game.stars || 0) + amt;
-        }
-        updateStudent(entry.studentId, { game: game });
-      }
-    }
-    window.dispatchEvent(new CustomEvent('gc:score-added', { detail: row }));
   }
 
   // ---- full academic year attendance history (deterministic seed, used as the default
@@ -610,24 +362,6 @@
     return counts;
   }
 
-  // ---- class-wide totals (reactive — reads from getStudents) ----
-  function getClassTotals() {
-    const ss = getStudents();
-    return {
-      stars: ss.reduce((a, s) => a + (s.game.stars || 0), 0),
-      coins: ss.reduce((a, s) => a + (s.game.coins || 0), 0),
-      medals: ss.reduce((a, s) => a + (s.badges || 0), 0),
-      classXP: ss.reduce((a, s) => a + s.game.level * 1000 + s.game.xp, 0),
-    };
-  }
-
-  // ---- custom rewards (teacher-created) ----
-  const customRewardsStore = makeStore('custom_rewards', ['id'], 'gc:rewards-changed', []);
-  function getCustomRewards() { return customRewardsStore.list(); }
-  function addCustomReward(r) {
-    customRewardsStore.upsert(Object.assign({}, r, { id: 'cr' + Date.now() }));
-  }
-
   // list all school days between two dates
   function getSchoolDays(from, to) {
     const days = [];
@@ -637,73 +371,6 @@
       d.setDate(d.getDate() + 1);
     }
     return days;
-  }
-
-  // ---- daily random event (deterministic per date) ----
-  const DAILY_EVENTS = [
-    { key: 'xp2',      th: '🌈 Rainbow Day',   desc: 'XP ทุกกิจกรรมวันนี้ ×2',     icon: 'spark',  hue: 305 },
-    { key: 'treasure', th: '💎 Treasure Day',   desc: 'สุ่มเหรียญพิเศษเมื่อเช็คชื่อ', icon: 'coin',   hue: 50  },
-    { key: 'stars',    th: '⭐ Star Shower',     desc: 'ดาวทุกรางวัลเพิ่มเป็น 2×',    icon: 'star',   hue: 88  },
-    { key: 'quest',    th: '📜 Quest Blitz',     desc: 'เควสต์วันนี้ให้ XP +50%',      icon: 'report', hue: 160 },
-    { key: 'boss',     th: '🐉 Boss Rush',       desc: 'HP บอสลดลง 30% วันนี้',        icon: 'fire',   hue: 22  },
-    null, null, null, null,
-  ];
-  function getDailyEvent() {
-    const today = dateKey(new Date());
-    const parts = today.split('-').map(Number);
-    const hash = (parts[0] * 31 + parts[1] * 7 + parts[2]) % DAILY_EVENTS.length;
-    return DAILY_EVENTS[hash];
-  }
-
-  // ---- guild stats (reactive) ----
-  function getGuildStats() {
-    const ss = getStudents();
-    return GUILDS.map(function(g) {
-      const members = ss.filter(function(s) { return s.guild === g.key; });
-      const xp = members.reduce(function(a, s) { return a + s.game.level * 1000 + s.game.xp; }, 0);
-      const stars = members.reduce(function(a, s) { return a + s.game.stars; }, 0);
-      const coins = members.reduce(function(a, s) { return a + s.game.coins; }, 0);
-      const sorted = [...members].sort(function(a, b) { return (b.game.level * 1000 + b.game.xp) - (a.game.level * 1000 + a.game.xp); });
-      return Object.assign({}, g, { members: sorted, xp: xp, stars: stars, coins: coins, mvp: sorted[0] });
-    }).sort(function(a, b) { return b.xp - a.xp; });
-  }
-
-  // ---- class-level achievements ----
-  const CLASS_ACHIEVEMENTS = [
-    { key: 'attend_all',  th: 'เข้าเรียนครบทั้งห้อง',          icon: 'check',  hue: 150, badge: 'Perfect Attendance', reward: '+500 XP ห้อง', condition: function(ss) { return ss.every(function(s) { return s.status !== 'absent'; }); } },
-    { key: 'stars100',    th: 'ดาวรวม 100 ดวง',                 icon: 'star',   hue: 50,  badge: 'Star Collective',    reward: '+300 XP ห้อง', condition: function(ss) { return ss.reduce(function(a,s) { return a+s.game.stars; },0) >= 100; } },
-    { key: 'level10x5',   th: 'นักเรียน 5 คน ขึ้น Lv.10+',     icon: 'crown',  hue: 265, badge: 'Rising Stars',       reward: '+200 XP ห้อง', condition: function(ss) { return ss.filter(function(s){ return s.game.level >= 10; }).length >= 5; } },
-    { key: 'nogap',       th: 'ไม่มีใครขาด (วันนี้)',           icon: 'shield', hue: 88,  badge: 'Shield of Unity',    reward: '+400 XP ห้อง', condition: function(ss) { return ss.every(function(s) { return s.status !== 'absent'; }); } },
-    { key: 'coins5000',   th: 'เหรียญรวม 5,000+',               icon: 'coin',   hue: 50,  badge: 'Treasure Vault',     reward: 'กล่องสมบัติ',   condition: function(ss) { return ss.reduce(function(a,s){return a+s.game.coins;},0) >= 5000; } },
-    { key: 'territory50', th: 'ทุกดินแดนเฉลี่ย 50%+',           icon: 'map',    hue: 200, badge: 'World Explorers',    reward: 'ตราสำรวจโลก',   condition: function(ss) { return SUBJECTS.every(function(sub) { return ss.reduce(function(a,s){return a+(s.game.territories[sub.key]||0);},0)/ss.length >= 50; }); } },
-    { key: 'allguild',    th: 'ทุกกิลด์มีสมาชิก Lv.5+',        icon: 'fire',   hue: 22,  badge: 'Alliance of Power',  reward: '+250 XP ทุกคน', condition: function(ss) { return GUILDS.every(function(g) { return ss.filter(function(s){ return s.guild===g.key && s.game.level>=5; }).length >= 1; }); } },
-    { key: 'badges20',    th: 'เหรียญตราสะสม 20+',              icon: 'trophy', hue: 280, badge: 'Badge Hunters',      reward: 'ของรางวัลพิเศษ', condition: function(ss) { return ss.reduce(function(a,s){return a+(s.badges||0);},0) >= 20; } },
-  ];
-  const classAchClaimedStore = makeStore('class_achievements_claimed', ['key'], 'gc:students-changed', []);
-  function getClassAchievements() {
-    const ss = getStudents();
-    const claimed = classAchClaimedStore.list().map(function (r) { return r.key; });
-    return CLASS_ACHIEVEMENTS.map(function(a) {
-      return Object.assign({}, a, { done: a.condition(ss), claimed: claimed.includes(a.key) });
-    });
-  }
-  function claimClassAchievement(key) {
-    classAchClaimedStore.upsert({ key: key });
-  }
-
-  // ---- titles (earned by meeting conditions, highest match wins) ----
-  const TITLES = [
-    { key: 'newcomer',   th: 'นักสำรวจรุ่นใหม่',    en: 'New Explorer',       hue: 200, icon: 'map',    condition: s => s.game.level >= 1 },
-    { key: 'reader',     th: 'ราชานักอ่าน',          en: 'Reading King',        hue: 12,  icon: 'book',   condition: s => (s.game.territories?.thai  || 0) >= 60 },
-    { key: 'mathwizard', th: 'จอมเวทคณิตศาสตร์',    en: 'Math Wizard',         hue: 265, icon: 'calc',   condition: s => (s.game.territories?.math  || 0) >= 60 },
-    { key: 'helper',     th: 'ผู้พิทักษ์มิตรภาพ',    en: 'Guardian of Friends', hue: 350, icon: 'heart',  condition: s => (s.game.stars  || 0) >= 20 },
-    { key: 'guardian',   th: 'ผู้พิทักษ์ความรู้',    en: 'Knowledge Guardian',  hue: 150, icon: 'shield', condition: s => s.game.level >= 10 },
-    { key: 'champion',   th: 'แชมป์แห่งอาณาจักร',   en: 'Kingdom Champion',    hue: 50,  icon: 'crown',  condition: s => s.game.level >= 20 },
-    { key: 'grandmaster',th: 'มหาจอมยุทธ์',          en: 'Grand Master',        hue: 280, icon: 'spark',  condition: s => s.game.level >= 20 && (s.game.xp || 0) >= 800 },
-  ];
-  function getTitleForStudent(s) {
-    const matched = TITLES.filter(t => t.condition(s));
-    return matched[matched.length - 1] || TITLES[0];
   }
 
   // ---- consecutive present-day streak ----
@@ -736,23 +403,9 @@
   function getSubjectAverages() {
     const ss = getStudents();
     return SUBJECTS.map(function (sub) {
-      const avg = ss.length ? Math.round(ss.reduce(function (a, s) { return a + (s.game.territories[sub.key] || 0); }, 0) / ss.length) : 0;
+      const avg = ss.length ? Math.round(ss.reduce(function (a, s) { return a + (s.territories[sub.key] || 0); }, 0) / ss.length) : 0;
       return Object.assign({}, sub, { avg: avg });
     });
-  }
-
-  function getBehaviorSummary() {
-    const ss = getStudents();
-    const totalStars = ss.reduce(function (a, s) { return a + (s.game.stars || 0); }, 0);
-    return { totalStars: totalStars, avgStars: ss.length ? +(totalStars / ss.length).toFixed(1) : 0, maxStars: 50 };
-  }
-
-  function getXPCoinTotals() {
-    const ss = getStudents();
-    return {
-      xp: ss.reduce(function (a, s) { return a + (s.game.xp || 0); }, 0),
-      coins: ss.reduce(function (a, s) { return a + (s.game.coins || 0); }, 0),
-    };
   }
 
   const CALENDAR_EVENTS = [
@@ -917,29 +570,6 @@
     });
   }
 
-  // ---- reactive achievements (computed from live student data) ----
-  function getAchievements() {
-    const ss = getStudents();
-    function topBy(fn) { return [...ss].sort(function(a, b) { return fn(b) - fn(a); })[0]; }
-    const log = getScoreLog();
-    const entriesById = {};
-    log.forEach(function(e) { if (e.studentId) entriesById[e.studentId] = (entriesById[e.studentId] || 0) + 1; });
-    const topEntries = [...ss].sort(function(a, b) { return (entriesById[b.id] || 0) - (entriesById[a.id] || 0); })[0];
-    const streakMap = {};
-    ss.forEach(function(s) { streakMap[s.id] = getStudentStreak(s.id); });
-    const topStreak = [...ss].sort(function(a, b) { return (streakMap[b.id] || 0) - (streakMap[a.id] || 0); })[0];
-    return [
-      { key: 'mvp',        th: 'MVP แห่งฤดูกาล',    icon: 'crown',  hue: 50,  holder: topBy(function(s) { return s.game.level * 1000 + s.game.xp; }) },
-      { key: 'helper',     th: 'ผู้ช่วยยอดเยี่ยม',   icon: 'heart',  hue: 350, holder: topBy(function(s) { return s.game.stars; }) },
-      { key: 'reader',     th: 'ราชานักอ่าน',        icon: 'book',   hue: 12,  holder: topBy(function(s) { return s.game.territories.thai; }) },
-      { key: 'mathwizard', th: 'จอมเวทคณิตศาสตร์',  icon: 'calc',   hue: 265, holder: topBy(function(s) { return s.game.territories.math; }) },
-      { key: 'attend',     th: 'ฮีโร่มาเรียน',       icon: 'check',  hue: 150, holder: topBy(function(s) { return (s.status === 'present' ? 100 : 0) + s.badges; }) },
-      { key: 'coder',      th: 'ฮีโร่เทคโนโลยี',    icon: 'tool',   hue: 230, holder: topBy(function(s) { return s.game.territories.career; }) },
-      { key: 'quester',    th: 'นักล่าเควสต์',       icon: 'report', hue: 88,  holder: topEntries },
-      { key: 'streak',     th: 'ราชาสายขยัน',        icon: 'fire',   hue: 22,  holder: topStreak },
-    ];
-  }
-
   // ---- generic CSV export: builds a CSV string from headers+rows and triggers a browser download ----
   function exportCSV(filename, headers, rows) {
     function esc(v) {
@@ -958,24 +588,17 @@
   }
 
   window.GC = {
-    STATUSES, PRESENT_LIKE, LIVE, RANKS, TIERS, tierOf, SUBJECTS, REWARDS,
+    STATUSES, PRESENT_LIKE, LIVE, SUBJECTS,
     STUDENTS: SEED_STUDENTS, CLASS, WEEK_TREND,
-    CLASS_XP, CLASS_LEVEL, SEASON, PET, QUESTS, ACHIEVEMENTS, KINGDOM_ZONES,
-    BOSS, SEASONS, SEASON_TRACK,
-    GUILDS, DAILY_EVENTS, CLASS_ACHIEVEMENTS, BOSS_SKILLS, PET_MOODS,
-    getDailyEvent, getGuildStats, getClassAchievements, claimClassAchievement,
-    getPetMood, getActiveBossSkill, triggerBossSkill, clearBossSkill,
-    TITLES, getTitleForStudent, getStudentStreak, getAchievements,
+    getStudentStreak,
     getStudents, addStudent, deleteStudent, updateStudent,
     getClass, updateClass,
-    getScoreLog, addScoreLog,
-    getStudentAttendanceSummary, getClassTotals,
-    getCustomRewards, addCustomReward,
+    getStudentAttendanceSummary,
     ATTENDANCE_HISTORY, getAttendance, saveAttendance, getSchoolDays,
     YEAR_START, YEAR_END, isSchoolDay, dateKey,
 
     // Teacher Classroom OS additions
-    getSubjectAverages, getBehaviorSummary, getXPCoinTotals,
+    getSubjectAverages,
     CALENDAR_EVENTS, getUpcomingEvents,
     FINANCE_CATEGORIES, getSavingsTxns, addSavingsTxn, getSavingsBalances,
     getLedger, addLedgerEntry, getFinanceSummary,
