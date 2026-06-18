@@ -54,6 +54,7 @@ const TEACHER_NAV = [
   { key: 'dashboard',  th: 'แดชบอร์ด',          icon: 'home' },
   { key: 'students',   th: 'นักเรียน',           icon: 'users' },
   { key: 'attendance', th: 'เช็กชื่อ',           icon: 'calendar' },
+  { key: 'classadmin', th: 'ธุรการชั้นเรียน',    icon: 'report' },
   { key: 'behavior',   th: 'ความประพฤติ & XP',  icon: 'bolt' },
   { key: 'academic',   th: 'ผลการเรียน',        icon: 'book' },
   { key: 'finance',    th: 'การเงินห้องเรียน',   icon: 'coin' },

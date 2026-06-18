@@ -16,7 +16,7 @@ const {
   GameShell, GameHome, StudentProfile, TerritoryMap, RewardShop, GamesHub, ClassroomTools, StatusBoard,
   ClassroomKingdom, QuestBoard, HallOfFame, StudentGuild,
   BossRaid, PetSanctuary, SeasonHub, ScoreHistory,
-  GuildWar, ClassAchieve,
+  GuildWar, ClassAchieve, ClassroomAdmin,
 } = window;
 
 const LS = 'gcos.nav';
@@ -55,6 +55,7 @@ function App() {
     const inner = tRoute === 'dashboard' ? <TeacherDashboard openStudent={openStudent} setRoute={setTRoute} />
       : tRoute === 'students' ? <StudentsGrid openStudent={openStudent} />
       : tRoute === 'attendance' ? <Attendance openStudent={openStudent} />
+      : tRoute === 'classadmin' ? <ClassroomAdmin openStudent={openStudent} />
       : tRoute === 'behavior' ? <BehaviorXP openStudent={openStudent} />
       : tRoute === 'academic' ? <AcademicRecords openStudent={openStudent} />
       : tRoute === 'finance' ? <ClassroomFinance />
