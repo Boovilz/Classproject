@@ -1,16 +1,15 @@
 /* ============================================================
    APP SHELL — router
    ============================================================ */
-const {
-  Login, TeacherShell, TeacherDashboard, Attendance, Health, StudentsGrid,
-  SettingsPage, ClassroomFinance, AcademicRecords, HomeVisits, Documents, ParentCommunication,
-  StudentProfile, HomeworkTracking, ClassroomAdmin,
-} = window;
-
 const LS = 'gcos.nav';
 function loadNav() { try { return JSON.parse(localStorage.getItem(LS)) || {}; } catch (e) { return {}; } }
 
 function App() {
+  const {
+    Login, TeacherShell, TeacherDashboard, Attendance, Health, StudentsGrid,
+    SettingsPage, ClassroomFinance, AcademicRecords, HomeVisits, Documents, ParentCommunication,
+    StudentProfile, HomeworkTracking, ClassroomAdmin,
+  } = window;
   const saved = React.useMemo(loadNav, []);
   const [stage, setStage] = React.useState(saved.stage || 'login'); // login | app
   const [tRoute, setTRoute] = React.useState(saved.tRoute || 'dashboard');
