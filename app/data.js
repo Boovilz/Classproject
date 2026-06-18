@@ -13,6 +13,9 @@
     activity: { key: 'activity', th: 'ไปกิจกรรม',   short: 'กิจกรรม', color: 'var(--st-activity)', icon: 'flag' },
   };
 
+  // statuses that count as "came to school" — used to gate the milk/brush/lunch welfare fields
+  const PRESENT_LIKE = ['present', 'late', 'activity'];
+
   // ---- realtime live statuses ----
   const LIVE = {
     present:  { th: 'อยู่ในห้อง', color: 'var(--st-present)', icon: 'seat' },
@@ -887,7 +890,7 @@
   }
 
   window.GC = {
-    STATUSES, LIVE, RANKS, TIERS, tierOf, SUBJECTS, REWARDS,
+    STATUSES, PRESENT_LIKE, LIVE, RANKS, TIERS, tierOf, SUBJECTS, REWARDS,
     STUDENTS, CLASS, WEEK_TREND,
     CLASS_XP, CLASS_LEVEL, SEASON, PET, QUESTS, ACHIEVEMENTS, KINGDOM_ZONES,
     BOSS, SEASONS, SEASON_TRACK,

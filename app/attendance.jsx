@@ -5,7 +5,7 @@
    ============================================================ */
 function Attendance({ openStudent }) {
   const STUDENTS = useStudents();
-  const { STATUSES, getAttendance, saveAttendance, isSchoolDay, dateKey, YEAR_START, YEAR_END } = window.GC;
+  const { STATUSES, PRESENT_LIKE, getAttendance, saveAttendance, isSchoolDay, dateKey, YEAR_START, YEAR_END } = window.GC;
   const order = ['present', 'late', 'sick', 'leave', 'activity', 'absent'];
 
   const TODAY = new Date(2026, 4, 29);
@@ -54,8 +54,17 @@ function Attendance({ openStudent }) {
     });
   }, [STUDENTS]);
 
-  const setStatus = (id, status) => { setRows(r => r.map(x => x.id === id ? { ...x, status } : x)); setDirty(true); };
-  const bulkAll = (status) => { setRows(r => r.map(x => ({ ...x, status }))); setDirty(true); };
+  // marking a student present-like (มาเรียน/สาย/กิจกรรม) auto-ticks the welfare fields
+  // (ดื่มนม/แปรงฟัน/อาหารกลางวัน) since coming to school implies receiving them — the
+  // teacher can still uncheck individual fields afterwards on the ธุรการชั้นเรียน page
+  const setStatus = (id, status) => {
+    setRows(r => r.map(x => x.id === id ? { ...x, status, ...(PRESENT_LIKE.includes(status) ? { milk: true, brush: true, lunch: true } : {}) } : x));
+    setDirty(true);
+  };
+  const bulkAll = (status) => {
+    setRows(r => r.map(x => ({ ...x, status, ...(PRESENT_LIKE.includes(status) ? { milk: true, brush: true, lunch: true } : {}) })));
+    setDirty(true);
+  };
   const save = () => { saveAttendance(selDate, rows); setDirty(false); };
 
   const student = id => STUDENTS.find(s => s.id === id);
