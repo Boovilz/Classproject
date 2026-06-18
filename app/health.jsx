@@ -322,6 +322,37 @@ function Health() {
             </div>
             <button className="btn btn-primary" style={{ padding: '9px 16px', fontSize: 13.5 }}><Icon name="plus" size={16} color="#fff" /> บันทึกใหม่</button>
           </div>
+
+          {/* vaccination records */}
+          {(() => {
+            const rec = window.GC.getVaccinationRecord(st.id);
+            const cov = window.GC.getVaccinationCoverage();
+            return (
+              <div className="glass col" style={{ borderRadius: 'var(--r-lg)', padding: '18px 22px', gap: 12 }}>
+                <div className="row" style={{ justifyContent: 'space-between' }}>
+                  <h4 style={{ fontSize: 15, color: 'var(--ink)' }}>บันทึกการรับวัคซีน</h4>
+                  <span className="pill" style={{ background: 'color-mix(in oklch,var(--emerald) 16%,transparent)', color: 'var(--emerald)' }}>
+                    ห้องเรียนครบ {cov.pct}%
+                  </span>
+                </div>
+                <div className="col" style={{ gap: 8 }}>
+                  {window.GC.VACCINE_LIST.map((v, i) => {
+                    const done = rec?.records?.[i]?.done;
+                    const date = rec?.records?.[i]?.date;
+                    return (
+                      <div key={v} className="row" style={{ gap: 10, padding: '8px 10px', borderRadius: 'var(--r-md)', background: 'var(--surface-2)' }}>
+                        <Icon name={done ? 'check' : 'bell'} size={16} color={done ? 'var(--st-present)' : 'var(--st-late)'} />
+                        <span style={{ flex: 1, fontSize: 13, color: 'var(--ink-soft)' }}>{v}</span>
+                        <span style={{ fontSize: 11.5, color: done ? 'var(--st-present)' : 'var(--st-late)' }}>
+                          {done ? `รับแล้ว · ${date}` : 'ยังไม่รับ'}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
         </div>
       </div>
     </div>

@@ -703,6 +703,165 @@
     return streak;
   }
 
+  // ---- dashboard summary helpers ----
+  function getSubjectAverages() {
+    const ss = getStudents();
+    return SUBJECTS.map(function (sub) {
+      const avg = ss.length ? Math.round(ss.reduce(function (a, s) { return a + (s.game.territories[sub.key] || 0); }, 0) / ss.length) : 0;
+      return Object.assign({}, sub, { avg: avg });
+    });
+  }
+
+  function getBehaviorSummary() {
+    const ss = getStudents();
+    const totalStars = ss.reduce(function (a, s) { return a + (s.game.stars || 0); }, 0);
+    return { totalStars: totalStars, avgStars: ss.length ? +(totalStars / ss.length).toFixed(1) : 0, maxStars: 50 };
+  }
+
+  function getXPCoinTotals() {
+    const ss = getStudents();
+    return {
+      xp: ss.reduce(function (a, s) { return a + (s.game.xp || 0); }, 0),
+      coins: ss.reduce(function (a, s) { return a + (s.game.coins || 0); }, 0),
+    };
+  }
+
+  const CALENDAR_EVENTS = [
+    { date: '2026-05-30', th: 'ส่งแบบฝึกหัดคณิตศาสตร์', icon: 'book',     kind: 'academic' },
+    { date: '2026-06-02', th: 'เยี่ยมบ้านนักเรียน',        icon: 'door',     kind: 'visit' },
+    { date: '2026-06-06', th: 'ประชุมผู้ปกครองภาคเรียนที่ 1', icon: 'users', kind: 'meeting' },
+    { date: '2026-06-10', th: 'สอบกลางภาค',                icon: 'report',  kind: 'exam' },
+    { date: '2026-06-15', th: 'กำหนดชำระค่าทัศนศึกษา',     icon: 'coin',    kind: 'finance' },
+    { date: '2026-06-20', th: 'กิจกรรมวันไหว้ครู',         icon: 'heart',   kind: 'event' },
+  ];
+  function getUpcomingEvents(limit) {
+    const today = dateKey(YEAR_END); // app "today" = 2026-05-29
+    return CALENDAR_EVENTS.filter(function (e) { return e.date >= today; }).slice(0, limit || 5);
+  }
+
+  // ---- classroom finance: student savings + class income/expense ledger ----
+  const FINANCE_CATEGORIES = {
+    income:  [{ key: 'fundraise', th: 'กิจกรรมระดมทุน' }, { key: 'donation', th: 'เงินบริจาค' }, { key: 'fee', th: 'ค่าธรรมเนียมกิจกรรม' }],
+    expense: [{ key: 'supplies', th: 'อุปกรณ์การเรียน' }, { key: 'snack', th: 'ขนม/อาหารกิจกรรม' }, { key: 'fieldtrip', th: 'ทัศนศึกษา' }, { key: 'reward', th: 'ของรางวัล' }],
+  };
+  const FINANCE_SAVINGS_SEED = STUDENTS.map(function (s, i) { return { studentId: s.id, base: seeded(i + 60, 80, 650) }; });
+  const LS_FIN_SAVE = 'gcos.finance.savings';
+  const LS_FIN_LEDGER = 'gcos.finance.ledger';
+  const LEDGER_SEED = [
+    { id: 'L1', type: 'income',  category: 'fundraise', amount: 850, note: 'ขายของในงานกีฬาสี', date: '2026-05-10' },
+    { id: 'L2', type: 'expense', category: 'supplies',  amount: 320, note: 'ซื้อสมุด-ดินสอกองกลาง', date: '2026-05-14' },
+    { id: 'L3', type: 'income',  category: 'fee',       amount: 1600, note: 'เก็บค่าทัศนศึกษารอบแรก', date: '2026-05-20' },
+    { id: 'L4', type: 'expense', category: 'reward',    amount: 240, note: 'ของรางวัลกล่องสุ่มประจำสัปดาห์', date: '2026-05-25' },
+  ];
+  function getSavingsTxns() { try { return JSON.parse(localStorage.getItem(LS_FIN_SAVE)) || []; } catch (e) { return []; } }
+  function addSavingsTxn(t) {
+    const list = getSavingsTxns();
+    list.unshift(Object.assign({}, t, { id: 'SV' + Date.now(), at: Date.now() }));
+    localStorage.setItem(LS_FIN_SAVE, JSON.stringify(list.slice(0, 400)));
+    window.dispatchEvent(new CustomEvent('gc:finance-changed'));
+  }
+  function getSavingsBalances() {
+    const ss = getStudents();
+    const seedMap = {}; FINANCE_SAVINGS_SEED.forEach(function (f) { seedMap[f.studentId] = f.base; });
+    const adj = {};
+    getSavingsTxns().forEach(function (t) {
+      adj[t.studentId] = (adj[t.studentId] || 0) + (t.kind === 'deposit' ? Number(t.amount) || 0 : -(Number(t.amount) || 0));
+    });
+    return ss.map(function (s) { return { student: s, balance: Math.max(0, (seedMap[s.id] || 0) + (adj[s.id] || 0)) }; });
+  }
+  function getLedger() { try { return JSON.parse(localStorage.getItem(LS_FIN_LEDGER)) || LEDGER_SEED; } catch (e) { return LEDGER_SEED; } }
+  function addLedgerEntry(entry) {
+    const list = getLedger();
+    localStorage.setItem(LS_FIN_LEDGER, JSON.stringify([Object.assign({}, entry, { id: 'L' + Date.now() }), ...list]));
+    window.dispatchEvent(new CustomEvent('gc:finance-changed'));
+  }
+  function getFinanceSummary() {
+    const ledger = getLedger();
+    const income = ledger.filter(function (t) { return t.type === 'income'; }).reduce(function (a, t) { return a + (Number(t.amount) || 0); }, 0);
+    const expense = ledger.filter(function (t) { return t.type === 'expense'; }).reduce(function (a, t) { return a + (Number(t.amount) || 0); }, 0);
+    const totalSavings = getSavingsBalances().reduce(function (a, r) { return a + r.balance; }, 0);
+    return { income: income, expense: expense, net: income - expense, totalSavings: totalSavings };
+  }
+
+  // ---- health: vaccination records ----
+  const VACCINE_LIST = ['คอตีบ-บาดทะยัก-ไอกรน (DTP)', 'โปลิโอ (OPV)', 'หัด-คางทูม-หัดเยอรมัน (MMR)', 'ไข้สมองอักเสบเจอี (JE)', 'ไข้หวัดใหญ่ตามฤดูกาล'];
+  const VACCINATIONS = STUDENTS.map(function (s, i) {
+    return {
+      studentId: s.id,
+      records: VACCINE_LIST.map(function (v, k) {
+        const done = seeded(i * 7 + k, 0, 10) > 2;
+        return { vaccine: v, done: done, date: done ? ('25' + (65 + (k % 3)) + '-0' + ((k % 9) + 1) + '-1' + k) : null };
+      }),
+    };
+  });
+  function getVaccinationRecord(studentId) { return VACCINATIONS.find(function (v) { return v.studentId === studentId; }); }
+  function getVaccinationCoverage() {
+    const total = VACCINATIONS.length * VACCINE_LIST.length;
+    const done = VACCINATIONS.reduce(function (a, v) { return a + v.records.filter(function (r) { return r.done; }).length; }, 0);
+    return { total: total, done: done, pct: total ? Math.round(done / total * 100) : 0 };
+  }
+
+  // ---- home visits ----
+  const LS_HOME_VISIT = 'gcos.homevisits';
+  const HOME_VISIT_SEED = [
+    { id: 'HV1', studentId: STUDENTS[4].id,  date: '2026-05-12', purpose: 'ติดตามการขาดเรียนบ่อย',     notes: 'พบผู้ปกครอง แจ้งเหตุผลครอบครัวย้ายที่พัก ตกลงให้มาเรียนปกติสัปดาห์หน้า', status: 'เสร็จสิ้น' },
+    { id: 'HV2', studentId: STUDENTS[10].id, date: '2026-05-20', purpose: 'ปัญหาด้านการเงินที่บ้าน',    notes: 'ประสานทุนการศึกษาเพิ่มเติมให้กับครอบครัว',                         status: 'ติดตามต่อ' },
+    { id: 'HV3', studentId: STUDENTS[1].id,  date: '2026-06-02', purpose: 'เยี่ยมบ้านประจำภาคเรียน',     notes: '',                                                                  status: 'นัดหมายแล้ว' },
+  ];
+  function getHomeVisits() { try { return JSON.parse(localStorage.getItem(LS_HOME_VISIT)) || HOME_VISIT_SEED; } catch (e) { return HOME_VISIT_SEED; } }
+  function addHomeVisit(v) {
+    const list = getHomeVisits();
+    localStorage.setItem(LS_HOME_VISIT, JSON.stringify([Object.assign({}, v, { id: 'HV' + Date.now() }), ...list]));
+    window.dispatchEvent(new CustomEvent('gc:homevisits-changed'));
+  }
+
+  // ---- documents ----
+  const LS_DOCS = 'gcos.documents';
+  const DOC_SEED = [
+    { id: 'D1', name: 'รายชื่อนักเรียน ป.4-2568.xlsx',          cat: 'รายชื่อ',    date: '2026-05-15', size: '48 KB',  icon: 'report' },
+    { id: 'D2', name: 'แบบฟอร์มขออนุญาตทัศนศึกษา.pdf',          cat: 'แบบฟอร์ม',   date: '2026-05-20', size: '212 KB', icon: 'note' },
+    { id: 'D3', name: 'รายงานพัฒนาการนักเรียน เทอม 2.pdf',       cat: 'รายงาน',     date: '2026-05-22', size: '1.1 MB', icon: 'chart' },
+    { id: 'D4', name: 'บันทึกการประชุมผู้ปกครอง.docx',          cat: 'บันทึก',     date: '2026-05-25', size: '96 KB',  icon: 'book' },
+    { id: 'D5', name: 'แผนการสอนหน่วยที่ 5.pdf',                cat: 'แผนการสอน',  date: '2026-05-27', size: '640 KB', icon: 'book' },
+  ];
+  function getDocuments() { try { return JSON.parse(localStorage.getItem(LS_DOCS)) || DOC_SEED; } catch (e) { return DOC_SEED; } }
+  function addDocument(d) {
+    const list = getDocuments();
+    localStorage.setItem(LS_DOCS, JSON.stringify([Object.assign({}, d, { id: 'D' + Date.now() }), ...list]));
+    window.dispatchEvent(new CustomEvent('gc:documents-changed'));
+  }
+  function deleteDocument(id) {
+    localStorage.setItem(LS_DOCS, JSON.stringify(getDocuments().filter(function (d) { return d.id !== id; })));
+    window.dispatchEvent(new CustomEvent('gc:documents-changed'));
+  }
+
+  // ---- parent communication: announcements + homework ----
+  const LS_ANN = 'gcos.announcements';
+  const ANN_SEED = [
+    { id: 'A1', title: 'ปิดเทอมภาคฤดูร้อน',                     body: 'แจ้งปิดภาคเรียนวันที่ 21 มี.ค. - 18 พ.ค. 2569 ขอให้นักเรียนเตรียมตัวเปิดเทอมใหม่', date: '2026-05-10', audience: 'ทุกคน' },
+    { id: 'A2', title: 'นัดประชุมผู้ปกครองภาคเรียนที่ 1',        body: 'ขอเชิญผู้ปกครองเข้าร่วมประชุมวันเสาร์ที่ 6 มิ.ย. 2569 เวลา 09:00 น. ณ ห้องประชุมโรงเรียน', date: '2026-05-28', audience: 'ทุกคน' },
+    { id: 'A3', title: 'แจ้งค่าธรรมเนียมกิจกรรมทัศนศึกษา',       body: 'กรุณาชำระเงินผ่านครูประจำชั้นภายในวันที่ 15 มิ.ย. 2569',                              date: '2026-06-01', audience: 'ทุกคน' },
+  ];
+  function getAnnouncements() { try { return JSON.parse(localStorage.getItem(LS_ANN)) || ANN_SEED; } catch (e) { return ANN_SEED; } }
+  function addAnnouncement(a) {
+    const list = getAnnouncements();
+    localStorage.setItem(LS_ANN, JSON.stringify([Object.assign({}, a, { id: 'A' + Date.now(), date: dateKey(new Date()) }), ...list]));
+    window.dispatchEvent(new CustomEvent('gc:announcements-changed'));
+  }
+
+  const LS_HW = 'gcos.homework';
+  const HW_SEED = [
+    { id: 'H1', subject: 'คณิตศาสตร์',     title: 'แบบฝึกหัดเศษส่วน หน้า 24-26',     due: '2026-06-05' },
+    { id: 'H2', subject: 'ภาษาไทย',        title: 'คัดลายมือบทอาขยาน',               due: '2026-06-03' },
+    { id: 'H3', subject: 'วิทยาศาสตร์',    title: 'ใบงานวงจรชีวิตผีเสื้อ',           due: '2026-06-08' },
+  ];
+  function getHomework() { try { return JSON.parse(localStorage.getItem(LS_HW)) || HW_SEED; } catch (e) { return HW_SEED; } }
+  function addHomework(h) {
+    const list = getHomework();
+    localStorage.setItem(LS_HW, JSON.stringify([Object.assign({}, h, { id: 'H' + Date.now() }), ...list]));
+    window.dispatchEvent(new CustomEvent('gc:homework-changed'));
+  }
+
   // ---- reactive achievements (computed from live student data) ----
   function getAchievements() {
     const ss = getStudents();
@@ -743,5 +902,15 @@
     getCustomRewards, addCustomReward,
     ATTENDANCE_HISTORY, getAttendance, saveAttendance, getSchoolDays,
     YEAR_START, YEAR_END, isSchoolDay, dateKey,
+
+    // Teacher Classroom OS additions
+    getSubjectAverages, getBehaviorSummary, getXPCoinTotals,
+    CALENDAR_EVENTS, getUpcomingEvents,
+    FINANCE_CATEGORIES, getSavingsTxns, addSavingsTxn, getSavingsBalances,
+    getLedger, addLedgerEntry, getFinanceSummary,
+    VACCINE_LIST, getVaccinationRecord, getVaccinationCoverage,
+    getHomeVisits, addHomeVisit,
+    getDocuments, addDocument, deleteDocument,
+    getAnnouncements, addAnnouncement, getHomework, addHomework,
   };
 })();

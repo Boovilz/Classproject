@@ -12,6 +12,7 @@ if (new URLSearchParams(window.location.search).has('portal')) {
 
 const {
   Login, Portal, TeacherShell, TeacherDashboard, Attendance, Health, StudentsGrid, BarcodeScore,
+  BehaviorXP, SettingsPage, ClassroomFinance, AcademicRecords, HomeVisits, Documents, ParentCommunication,
   GameShell, GameHome, StudentProfile, TerritoryMap, RewardShop, GamesHub, ClassroomTools, StatusBoard,
   ClassroomKingdom, QuestBoard, HallOfFame, StudentGuild,
   BossRaid, PetSanctuary, SeasonHub, ScoreHistory,
@@ -51,9 +52,17 @@ function App() {
   } else if (stage === 'portal') {
     body = <Portal key="portal" onEnter={enterWorld} onLogout={() => setStage('login')} />;
   } else if (world === 'teacher') {
-    const inner = tRoute === 'dashboard' ? <TeacherDashboard openStudent={openStudent} />
+    const inner = tRoute === 'dashboard' ? <TeacherDashboard openStudent={openStudent} setRoute={setTRoute} />
+      : tRoute === 'students' ? <StudentsGrid openStudent={openStudent} />
       : tRoute === 'attendance' ? <Attendance openStudent={openStudent} />
+      : tRoute === 'behavior' ? <BehaviorXP openStudent={openStudent} />
+      : tRoute === 'academic' ? <AcademicRecords openStudent={openStudent} />
+      : tRoute === 'finance' ? <ClassroomFinance />
       : tRoute === 'health' ? <Health />
+      : tRoute === 'homevisit' ? <HomeVisits openStudent={openStudent} />
+      : tRoute === 'documents' ? <Documents />
+      : tRoute === 'parent' ? <ParentCommunication openStudent={openStudent} />
+      : tRoute === 'settings' ? <SettingsPage />
       : tRoute === 'barcode' ? <BarcodeScore />
       : <StudentsGrid openStudent={openStudent} />;
     body = (

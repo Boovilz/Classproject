@@ -30,6 +30,14 @@
   --rk-platinum: oklch(0.82 0.10 200);
   --rk-diamond:  oklch(0.80 0.14 230);
   --rk-master:   oklch(0.66 0.22 315);
+
+  /* Teacher Classroom OS brand palette — royal blue / emerald / orange */
+  --royal:     oklch(0.50 0.16 258);
+  --royal-2:   oklch(0.40 0.16 262);
+  --emerald:   oklch(0.62 0.135 155);
+  --emerald-2: oklch(0.50 0.135 155);
+  --orange:    oklch(0.70 0.17 50);
+  --orange-2:  oklch(0.60 0.17 45);
 }
 
 /* ---------- TEACHER WORLD (light) ---------- */
