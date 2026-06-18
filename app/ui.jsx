@@ -227,4 +227,62 @@ function QRCodeBox({ value, size = 120, style }) {
   return <canvas ref={ref} width={size} height={size} style={{ borderRadius: 8, ...style }} />;
 }
 
-Object.assign(window, { Icon, HeroAvatar, Stat, Bar, RankBadge, LineChart, useStudents, QRCodeBox });
+/* barcode scan bar — generic "ยิงบาร์โค้ดเลขประจำตัวนักเรียน" input.
+   Scanners act as keyboards: they type the code then send Enter.
+   Looks up the student by code/id and fires onScan(student) which the
+   caller uses to persist the record (attendance present / homework submitted). */
+function BarcodeRecordBar({ onScan, hint, autoFocus = true }) {
+  const [input, setInput] = React.useState('');
+  const [flash, setFlash] = React.useState(null); // { ok, student }
+  const inputRef = React.useRef(null);
+  const flashTimer = React.useRef(null);
+
+  React.useEffect(() => {
+    if (autoFocus) inputRef.current?.focus();
+    return () => clearTimeout(flashTimer.current);
+  }, []);
+
+  function lookup() {
+    const code = input.trim();
+    setInput('');
+    if (!code) return;
+    const st = window.GC.getStudents().find(s => s.code === code || s.id === code);
+    if (st) { setFlash({ ok: true, student: st }); onScan(st); }
+    else { setFlash({ ok: false }); }
+    clearTimeout(flashTimer.current);
+    flashTimer.current = setTimeout(() => setFlash(null), 1800);
+    inputRef.current?.focus();
+  }
+
+  return (
+    <div className="glass col" style={{ borderRadius: 'var(--r-lg)', padding: 16, gap: 10 }}>
+      <div className="row" style={{ gap: 10, alignItems: 'center' }}>
+        <div className="center" style={{ width: 38, height: 38, borderRadius: 10, background: 'linear-gradient(135deg,var(--navy),var(--navy-2))', flexShrink: 0 }}>
+          <Icon name="report" size={18} color="#fff" />
+        </div>
+        <input ref={inputRef}
+          style={{ flex: 1, padding: '9px 12px', borderRadius: 'var(--r-md)', border: '1.5px solid var(--surface-2)',
+            background: 'var(--surface-1)', color: 'var(--ink)', fontSize: 14, outline: 'none', boxSizing: 'border-box',
+            boxShadow: flash ? `0 0 0 2px ${flash.ok ? 'var(--st-present)' : 'var(--st-absent)'}` : 'none' }}
+          placeholder={hint || 'สแกนหรือพิมพ์เลขประจำตัวนักเรียน แล้วกด Enter…'}
+          value={input} onChange={e => setInput(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && lookup()}
+          autoComplete="off" />
+        <button type="button" className="btn" style={{ padding: '8px 14px', background: 'linear-gradient(120deg,var(--navy),var(--navy-2))', color: '#fff', flexShrink: 0 }}
+          onClick={lookup}>
+          <Icon name="search" size={15} color="#fff" />
+        </button>
+      </div>
+      {flash && (
+        flash.ok
+          ? <div className="row" style={{ gap: 7, alignItems: 'center', paddingLeft: 2 }}>
+              <Icon name="check" size={14} color="var(--st-present)" />
+              <span style={{ fontSize: 12.5, color: 'var(--st-present)', fontWeight: 600 }}>{flash.student.nick} · #{flash.student.code} บันทึกแล้ว</span>
+            </div>
+          : <div style={{ fontSize: 12.5, color: 'var(--st-absent)', fontWeight: 600, paddingLeft: 2 }}>ไม่พบเลขประจำตัวนักเรียนนี้ ลองอีกครั้ง</div>
+      )}
+    </div>
+  );
+}
+
+Object.assign(window, { Icon, HeroAvatar, Stat, Bar, RankBadge, LineChart, useStudents, QRCodeBox, BarcodeRecordBar });

@@ -63,6 +63,8 @@ function HomeworkTracking({ openStudent }) {
   const [rows, setRows] = React.useState(() => selId ? window.GC.getHomeworkSubmissions(selId) : []);
   const [dirty, setDirty] = React.useState(false);
   const [showAdd, setShowAdd] = React.useState(false);
+  const [showScan, setShowScan] = React.useState(false);
+  const [scanToast, setScanToast] = React.useState(null);
 
   React.useEffect(() => {
     const refresh = () => {
@@ -100,11 +102,32 @@ function HomeworkTracking({ openStudent }) {
   };
   const save = () => { window.GC.saveHomeworkSubmissions(selId, rows); setDirty(false); };
 
+  // scanning a student's barcode (เลขประจำตัวนักเรียน) marks them as submitted
+  // for the currently selected assignment and saves immediately
+  const scanSubmit = (st) => {
+    setRows(r => {
+      const next = r.map(x => x.id === st.id ? { ...x, submitted: true } : x);
+      window.GC.saveHomeworkSubmissions(selId, next);
+      return next;
+    });
+    setDirty(false);
+    setScanToast(`ส่งแล้ว ✓ ${st.nick}`);
+    setTimeout(() => setScanToast(null), 2000);
+  };
+
   const submittedCount = rows.filter(r => r.submitted).length;
   const pct = rows.length ? Math.round((submittedCount / rows.length) * 100) : 0;
 
   return (
     <div className="col" style={{ gap: 18 }}>
+      {scanToast && (
+        <div style={{ position: 'fixed', bottom: 32, left: '50%', transform: 'translateX(-50%)', zIndex: 9999,
+          background: 'linear-gradient(120deg,var(--st-present),oklch(0.62 0.16 150))', color: '#fff',
+          padding: '10px 22px', borderRadius: 99, fontWeight: 700, fontSize: 14,
+          boxShadow: '0 8px 32px -8px var(--st-present)', animation: 'rise .2s ease-out' }}>
+          ✓ {scanToast}
+        </div>
+      )}
       <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
         <div>
           <div className="display" style={{ fontSize: 20, color: 'var(--ink)' }}>การบ้าน</div>
@@ -170,7 +193,30 @@ function HomeworkTracking({ openStudent }) {
               <Icon name="download" size={15} color={dirty ? '#fff' : 'var(--muted)'} />
               {dirty ? 'บันทึก *' : 'บันทึกแล้ว'}
             </button>
+            <button onClick={() => setShowScan(b => !b)} className="btn"
+              style={{ padding: '7px 14px', fontSize: 12.5,
+                background: showScan ? 'linear-gradient(120deg,var(--st-present),oklch(0.62 0.16 150))' : 'var(--surface-2)',
+                color: showScan ? '#fff' : 'var(--ink-soft)' }}>
+              <Icon name="report" size={15} color={showScan ? '#fff' : 'var(--ink-soft)'} />
+              {showScan ? 'ซ่อนสแกน' : 'สแกนส่งงาน 🔲'}
+            </button>
           </div>
+
+          {/* scan-to-submit panel — scanning a student's เลขประจำตัวนักเรียน
+              marks the homework as submitted for this assignment immediately */}
+          {showScan && (
+            <div className="col" style={{ gap: 10, animation: 'rise .2s ease-out' }}>
+              <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center', paddingLeft: 4 }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--ink)' }}>
+                  <Icon name="report" size={16} /> สแกนบาร์โค้ดเพื่อบันทึกการส่งงาน
+                </div>
+                <span style={{ fontSize: 12, color: 'var(--muted)' }}>ยิงรหัสนักเรียน → บันทึก "ส่งแล้ว" ทันที</span>
+              </div>
+              <BarcodeRecordBar autoFocus={true}
+                hint="สแกนหรือพิมพ์เลขประจำตัวนักเรียน → บันทึก &quot;ส่งแล้ว&quot; ทันที"
+                onScan={scanSubmit} />
+            </div>
+          )}
 
           {/* roster — one click per student toggles submitted / not submitted */}
           <div className="glass" style={{ borderRadius: 'var(--r-lg)', overflow: 'visible' }}>

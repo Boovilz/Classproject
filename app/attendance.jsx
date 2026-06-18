@@ -26,10 +26,25 @@ function Attendance({ openStudent }) {
   const [rows, setRows] = React.useState(() => getAttendance(selDate));
   const [dirty, setDirty] = React.useState(false);
   const [showBarcode, setShowBarcode] = React.useState(false);
+  const [showScanAttend, setShowScanAttend] = React.useState(false);
   const [awardRow, setAwardRow] = React.useState(null); // student id
   const [awardType, setAwardType] = React.useState('xp');
   const [awardAmt, setAwardAmt] = React.useState(10);
   const [awardToast, setAwardToast] = React.useState(null);
+  const [scanToast, setScanToast] = React.useState(null);
+
+  // scanning a student's barcode (เลขประจำตัวนักเรียน) marks them present and
+  // saves immediately — no extra click needed, unlike the manual checkbox flow
+  function scanAttendance(st) {
+    setRows(r => {
+      const next = r.map(x => x.id === st.id ? { ...x, status: 'present', milk: true, brush: true, lunch: true } : x);
+      saveAttendance(selDate, next);
+      return next;
+    });
+    setDirty(false);
+    setScanToast(`มาเรียน ✓ ${st.nick}`);
+    setTimeout(() => setScanToast(null), 2000);
+  }
 
   function doAward(studentId) {
     const st = student(studentId);
@@ -100,6 +115,14 @@ function Attendance({ openStudent }) {
           padding: '10px 22px', borderRadius: 99, fontWeight: 700, fontSize: 14,
           boxShadow: '0 8px 32px -8px var(--gold)', animation: 'rise .2s ease-out' }}>
           ⚡ {awardToast}
+        </div>
+      )}
+      {scanToast && (
+        <div style={{ position: 'fixed', bottom: 32, left: '50%', transform: 'translateX(-50%)', zIndex: 9999,
+          background: 'linear-gradient(120deg,var(--st-present),oklch(0.62 0.16 150))', color: '#fff',
+          padding: '10px 22px', borderRadius: 99, fontWeight: 700, fontSize: 14,
+          boxShadow: '0 8px 32px -8px var(--st-present)', animation: 'rise .2s ease-out' }}>
+          ✓ {scanToast}
         </div>
       )}
 
@@ -188,6 +211,13 @@ function Attendance({ openStudent }) {
               <Icon name="report" size={15} color={showBarcode ? '#fff' : 'var(--ink-soft)'} />
               {showBarcode ? 'ซ่อนบาร์โค้ด' : 'บันทึกคะแนน 🔲'}
             </button>
+            <button onClick={() => setShowScanAttend(b => !b)} className="btn"
+              style={{ padding: '7px 14px', fontSize: 12.5,
+                background: showScanAttend ? 'linear-gradient(120deg,var(--st-present),oklch(0.62 0.16 150))' : 'var(--surface-2)',
+                color: showScanAttend ? '#fff' : 'var(--ink-soft)' }}>
+              <Icon name="report" size={15} color={showScanAttend ? '#fff' : 'var(--ink-soft)'} />
+              {showScanAttend ? 'ซ่อนสแกนเข้าเรียน' : 'สแกนเข้าเรียน 🔲'}
+            </button>
           </div>
 
           {/* summary chips */}
@@ -214,6 +244,22 @@ function Attendance({ openStudent }) {
             <span style={{ fontSize: 12, color: 'var(--muted)' }}>สแกนหรือพิมพ์รหัส → กด Enter → มอบคะแนน</span>
           </div>
           <BarcodePanel compact={true} autoFocus={false} />
+        </div>
+      )}
+
+      {/* scan-to-attend panel — scanning a student's เลขประจำตัวนักเรียน marks
+          them present and saves immediately, no extra confirmation needed */}
+      {showScanAttend && (
+        <div className="col" style={{ gap: 10, animation: 'rise .2s ease-out' }}>
+          <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center', paddingLeft: 4 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--ink)' }}>
+              <Icon name="report" size={16} /> สแกนบาร์โค้ดเพื่อเช็คชื่อเข้าเรียน
+            </div>
+            <span style={{ fontSize: 12, color: 'var(--muted)' }}>ยิงรหัสนักเรียน → บันทึก "มาเรียน" ทันที</span>
+          </div>
+          <BarcodeRecordBar autoFocus={true}
+            hint="สแกนหรือพิมพ์เลขประจำตัวนักเรียน → บันทึก &quot;มาเรียน&quot; ทันที"
+            onScan={scanAttendance} />
         </div>
       )}
 
