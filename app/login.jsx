@@ -2,15 +2,33 @@
    LOGIN — cinematic entry, hints at both worlds
    ============================================================ */
 function Login({ onLogin }) {
-  const [tab, setTab] = React.useState('email');
-  const [email, setEmail] = React.useState('manee@school.ac.th');
-  const [pw, setPw] = React.useState('demo1234');
+  const [email, setEmail] = React.useState('');
+  const [pw, setPw] = React.useState('');
   const [busy, setBusy] = React.useState(false);
+  const [err, setErr] = React.useState('');
+  const [mode, setMode] = React.useState('signin'); // 'signin' | 'signup'
 
-  const go = (e) => {
+  const go = async (e) => {
     if (e) e.preventDefault();
+    setErr('');
+    if (!email || !pw) { setErr('กรุณากรอกอีเมลและรหัสผ่าน'); return; }
     setBusy(true);
-    setTimeout(() => onLogin(), 650);
+    try {
+      if (mode === 'signup') {
+        const { error } = await window.SB.auth.signUp({ email, password: pw });
+        if (error) throw error;
+        const { error: err2 } = await window.SB.auth.signInWithPassword({ email, password: pw });
+        if (err2) throw err2;
+      } else {
+        const { error } = await window.SB.auth.signInWithPassword({ email, password: pw });
+        if (error) throw error;
+      }
+      onLogin();
+    } catch (ex) {
+      setErr(ex && ex.message ? ex.message : 'เข้าสู่ระบบไม่สำเร็จ');
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -38,7 +56,7 @@ function Login({ onLogin }) {
               </div>
               <div>
                 <div className="display" style={{ fontSize: 20, color: '#fff', lineHeight: 1 }}>Classroom OS</div>
-                <div className="tech" style={{ fontSize: 12, color: 'var(--cyan)', letterSpacing: '.16em' }}>GAMIFIED EDITION</div>
+                <div className="tech" style={{ fontSize: 12, color: 'var(--cyan)', letterSpacing: '.16em' }}>TEACHER EDITION</div>
               </div>
             </div>
           </div>
@@ -46,10 +64,10 @@ function Login({ onLogin }) {
           <div style={{ position: 'relative' }}>
             <h1 style={{ fontSize: 40, color: '#fff', lineHeight: 1.05 }}>ห้องเรียน<br/>ที่มีชีวิต</h1>
             <p style={{ color: 'var(--ink-soft)', marginTop: 14, fontSize: 15, maxWidth: 320 }}>
-              ระบบบริหารจัดการชั้นเรียน ผสานโลกเกม RPG เพื่อครูยุคใหม่และนักเรียนที่กระตือรือร้น
+              ระบบบริหารจัดการชั้นเรียนครบวงจร เพื่อครูยุคใหม่และนักเรียนที่กระตือรือร้น
             </p>
             <div className="row" style={{ gap: 18, marginTop: 26 }}>
-              {[['users','จัดการชั้นเรียน'],['bolt','ระบบ XP & เลเวล'],['map','แผนที่ความรู้']].map((f,i)=>(
+              {[['users','จัดการชั้นเรียน'],['book','ผลการเรียน'],['heart','สุขภาพนักเรียน']].map((f,i)=>(
                 <div key={i} className="col" style={{ gap: 7, alignItems: 'flex-start' }}>
                   <div className="center" style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(255,255,255,.08)', color: 'var(--cyan)' }}>
                     <Icon name={f[0]} size={18} />
@@ -65,17 +83,18 @@ function Login({ onLogin }) {
         <div className="glass col" style={{ flex: '0 0 400px', maxWidth: '100%', padding: '46px 40px', justifyContent: 'center', gap: 18,
           background: 'rgba(20,16,40,0.72)' }}>
           <div>
-            <h2 style={{ fontSize: 26, color: '#fff' }}>เข้าสู่ระบบ</h2>
-            <p style={{ color: 'var(--muted)', fontSize: 14, marginTop: 4 }}>ยินดีต้อนรับกลับมา คุณครู</p>
+            <h2 style={{ fontSize: 26, color: '#fff' }}>{mode === 'signup' ? 'สร้างบัญชีคุณครู' : 'เข้าสู่ระบบ'}</h2>
+            <p style={{ color: 'var(--muted)', fontSize: 14, marginTop: 4 }}>
+              {mode === 'signup' ? 'ตั้งค่าบัญชีสำหรับใช้งานครั้งแรก' : 'ยินดีต้อนรับกลับมา คุณครู'}
+            </p>
           </div>
 
-          <button className="btn" onClick={go} style={{ background: '#fff', color: '#222', justifyContent: 'center' }}>
-            <Icon name="google" size={18} color="#4285F4" /> เข้าสู่ระบบด้วย Google
-          </button>
-
-          <div className="row" style={{ gap: 12, color: 'var(--muted)', fontSize: 12 }}>
-            <div style={{ flex: 1, height: 1, background: 'var(--line)' }} /> หรือ <div style={{ flex: 1, height: 1, background: 'var(--line)' }} />
-          </div>
+          {err && (
+            <div style={{ background: 'rgba(255,80,80,.12)', border: '1px solid rgba(255,80,80,.4)',
+              color: '#ff9b9b', fontSize: 13, padding: '10px 12px', borderRadius: 10 }}>
+              {err}
+            </div>
+          )}
 
           <form className="col" style={{ gap: 14 }} onSubmit={go}>
             <label className="col" style={{ gap: 7 }}>
@@ -93,12 +112,19 @@ function Login({ onLogin }) {
               </div>
             </label>
             <button className="btn btn-neon" type="submit" disabled={busy} style={{ justifyContent: 'center', marginTop: 4 }}>
-              {busy ? <><span className="spin" style={{ width: 16, height: 16, border: '2px solid #0a0a14', borderTopColor: 'transparent', borderRadius: 99, display: 'inline-block', animation: 'spinSlow .7s linear infinite' }} /> กำลังเข้าสู่ระบบ…</>
-                : <>เข้าสู่ระบบ <Icon name="arrowRight" size={18} color="#0a0a14" /></>}
+              {busy
+                ? <><span className="spin" style={{ width: 16, height: 16, border: '2px solid #0a0a14', borderTopColor: 'transparent', borderRadius: 99, display: 'inline-block', animation: 'spinSlow .7s linear infinite' }} /> กำลังดำเนินการ…</>
+                : mode === 'signup'
+                  ? <>สร้างบัญชี <Icon name="arrowRight" size={18} color="#0a0a14" /></>
+                  : <>เข้าสู่ระบบ <Icon name="arrowRight" size={18} color="#0a0a14" /></>}
             </button>
           </form>
           <p style={{ fontSize: 12, color: 'var(--muted)', textAlign: 'center' }}>
-            เดโม่ — กดเข้าสู่ระบบได้เลยเพื่อเข้าสู่ Portal Gate
+            {mode === 'signup' ? (
+              <>มีบัญชีแล้ว? <a href="#" onClick={(e) => { e.preventDefault(); setMode('signin'); setErr(''); }} style={{ color: 'var(--cyan)' }}>เข้าสู่ระบบ</a></>
+            ) : (
+              <>ใช้งานครั้งแรก? <a href="#" onClick={(e) => { e.preventDefault(); setMode('signup'); setErr(''); }} style={{ color: 'var(--cyan)' }}>สร้างบัญชีคุณครู</a></>
+            )}
           </p>
         </div>
       </div>

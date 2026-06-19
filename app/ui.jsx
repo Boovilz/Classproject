@@ -85,9 +85,15 @@ function Icon({ name, size = 20, sw = 1.9, color = 'currentColor', style, fill =
   );
 }
 
-/* ---------- Avatar placeholder (RPG hero portrait) ---------- */
+/* ---------- Avatar placeholder ---------- */
+function hueFromId(id) {
+  if (!id) return 270;
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) % 360;
+  return h;
+}
 function HeroAvatar({ student, size = 64, ring, glow }) {
-  const hue = student?.game?.hue ?? 270;
+  const hue = hueFromId(student?.id);
   const bg = `radial-gradient(120% 120% at 50% 18%, oklch(0.72 0.16 ${hue}), oklch(0.42 0.18 ${(hue + 40) % 360}))`;
   const shadow = glow
     ? `0 0 0 2px ${ring || 'rgba(255,255,255,.35)'}, 0 0 24px -4px oklch(0.7 0.2 ${hue})`
@@ -159,20 +165,6 @@ function Bar({ value, max = 100, color, height = 9, glow }) {
   );
 }
 
-/* ---------- Rank badge ---------- */
-function RankBadge({ rank, size = 'md' }) {
-  const r = window.GC.RANKS.find(x => x.key === rank) || window.GC.RANKS[0];
-  const s = size === 'sm' ? { p: '3px 9px', f: 11.5, i: 13 } : { p: '5px 12px', f: 13, i: 15 };
-  return (
-    <span className="pill tech" style={{ padding: s.p, fontSize: s.f,
-      background: 'color-mix(in oklch, ' + r.color + ' 22%, transparent)',
-      color: r.color, border: '1px solid color-mix(in oklch, ' + r.color + ' 50%, transparent)',
-      textTransform: 'uppercase', letterSpacing: '.05em' }}>
-      <Icon name="shield" size={s.i} /> {r.key}
-    </span>
-  );
-}
-
 /* ---------- Sparkline / mini line chart ---------- */
 function LineChart({ data, w = 520, h = 180, color, color2, series2, yLabel, pad = 34 }) {
   const all = [...data.map(d => d.v), ...(series2 ? series2.map(d => d.v) : [])];
@@ -216,15 +208,126 @@ function useStudents() {
   return students;
 }
 
-/* QR code box — renders a QR encoding `value` onto a canvas */
-function QRCodeBox({ value, size = 120, style }) {
+/* student barcode — renders a scannable Code128 barcode of the student's
+   เลขประจำตัวนักเรียน (the same `code` field used by the scan-to-record
+   lookups), onto a canvas so it can be printed or downloaded as PNG */
+function StudentBarcode({ value, id, height = 44 }) {
   const ref = React.useRef(null);
   React.useEffect(() => {
-    if (ref.current && window.QRCode) {
-      window.QRCode.toCanvas(ref.current, value, { width: size, margin: 1, color: { dark: '#1a1430', light: '#ffffff' } }, () => {});
+    if (ref.current && window.JsBarcode && value) {
+      window.JsBarcode(ref.current, value, {
+        format: 'CODE128', height, width: 2, margin: 4,
+        displayValue: false, background: '#ffffff', lineColor: '#000000',
+      });
     }
-  }, [value, size]);
-  return <canvas ref={ref} width={size} height={size} style={{ borderRadius: 8, ...style }} />;
+  }, [value, height]);
+  return <canvas ref={ref} id={id} style={{ width: '100%', maxWidth: 180, height: 'auto', display: 'block', margin: '0 auto' }} />;
 }
 
-Object.assign(window, { Icon, HeroAvatar, Stat, Bar, RankBadge, LineChart, useStudents, QRCodeBox });
+/* barcode scan bar — generic "ยิงบาร์โค้ดเลขประจำตัวนักเรียน" input.
+   Scanners act as keyboards: they type the code then send Enter.
+   Looks up the student by code/id and fires onScan(student) which the
+   caller uses to persist the record (attendance present / homework submitted). */
+function BarcodeRecordBar({ onScan, hint, autoFocus = true }) {
+  const [input, setInput] = React.useState('');
+  const [flash, setFlash] = React.useState(null); // { ok, student }
+  const inputRef = React.useRef(null);
+  const flashTimer = React.useRef(null);
+
+  React.useEffect(() => {
+    if (autoFocus) inputRef.current?.focus();
+    return () => clearTimeout(flashTimer.current);
+  }, []);
+
+  function lookup() {
+    const code = input.trim();
+    setInput('');
+    if (!code) return;
+    const st = window.GC.getStudents().find(s => s.code === code || s.id === code);
+    if (st) { setFlash({ ok: true, student: st }); onScan(st); }
+    else { setFlash({ ok: false }); }
+    clearTimeout(flashTimer.current);
+    flashTimer.current = setTimeout(() => setFlash(null), 1800);
+    inputRef.current?.focus();
+  }
+
+  return (
+    <div className="glass col" style={{ borderRadius: 'var(--r-lg)', padding: 16, gap: 10 }}>
+      <div className="row" style={{ gap: 10, alignItems: 'center' }}>
+        <div className="center" style={{ width: 38, height: 38, borderRadius: 10, background: 'linear-gradient(135deg,var(--navy),var(--navy-2))', flexShrink: 0 }}>
+          <Icon name="report" size={18} color="#fff" />
+        </div>
+        <input ref={inputRef}
+          style={{ flex: 1, padding: '9px 12px', borderRadius: 'var(--r-md)', border: '1.5px solid var(--surface-2)',
+            background: 'var(--surface-1)', color: 'var(--ink)', fontSize: 14, outline: 'none', boxSizing: 'border-box',
+            boxShadow: flash ? `0 0 0 2px ${flash.ok ? 'var(--st-present)' : 'var(--st-absent)'}` : 'none' }}
+          placeholder={hint || 'สแกนหรือพิมพ์เลขประจำตัวนักเรียน แล้วกด Enter…'}
+          value={input} onChange={e => setInput(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && lookup()}
+          autoComplete="off" />
+        <button type="button" className="btn" style={{ padding: '8px 14px', background: 'linear-gradient(120deg,var(--navy),var(--navy-2))', color: '#fff', flexShrink: 0 }}
+          onClick={lookup}>
+          <Icon name="search" size={15} color="#fff" />
+        </button>
+      </div>
+      {flash && (
+        flash.ok
+          ? <div className="row" style={{ gap: 7, alignItems: 'center', paddingLeft: 2 }}>
+              <Icon name="check" size={14} color="var(--st-present)" />
+              <span style={{ fontSize: 12.5, color: 'var(--st-present)', fontWeight: 600 }}>{flash.student.nick} · #{flash.student.code} บันทึกแล้ว</span>
+            </div>
+          : <div style={{ fontSize: 12.5, color: 'var(--st-absent)', fontWeight: 600, paddingLeft: 2 }}>ไม่พบเลขประจำตัวนักเรียนนี้ ลองอีกครั้ง</div>
+      )}
+    </div>
+  );
+}
+
+/* reusable print-friendly table modal — used by Export PDF buttons across
+   attendance / homework / student-roster pages. Isolates #print-table-sheet
+   from the rest of the page chrome (sidebar/topbar) under @media print, then
+   window.print() lets the browser's "Save as PDF" produce the PDF. */
+function PrintTableModal({ title, subtitle, columns, rows, onClose }) {
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 500, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <style>{`
+        @media print {
+          body * { visibility: hidden; }
+          #print-table-sheet, #print-table-sheet * { visibility: visible; }
+          #print-table-sheet { position: fixed; inset: 0; max-height: none; background: #fff; }
+          #print-table-toolbar { display: none !important; }
+        }
+      `}</style>
+      <div id="print-table-sheet" className="col" style={{ borderRadius: 'var(--r-xl)', padding: 24, gap: 16, width: '92vw', maxWidth: 900, maxHeight: '88vh', overflowY: 'auto', background: '#fff', boxShadow: '0 20px 60px -20px rgba(0,0,0,.5)' }}>
+        <div id="print-table-toolbar" className="row" style={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+          <div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: '#1a1430' }}>{title}</div>
+            {subtitle && <div style={{ fontSize: 12, color: '#777' }}>{subtitle}</div>}
+          </div>
+          <div className="row" style={{ gap: 10 }}>
+            <button onClick={() => window.print()} className="btn" style={{ background: 'linear-gradient(120deg,var(--navy),var(--navy-2))', color: '#fff' }}>
+              <Icon name="download" size={15} color="#fff" /> พิมพ์ PDF
+            </button>
+            <button onClick={onClose} className="btn btn-ghost">ปิด</button>
+          </div>
+        </div>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, color: '#1a1430' }}>
+          <thead>
+            <tr>
+              {columns.map(c => <th key={c} style={{ textAlign: 'left', padding: '8px 10px', borderBottom: '2px solid #ddd', fontSize: 12, color: '#555' }}>{c}</th>)}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r, i) => (
+              <tr key={i} style={{ background: i % 2 ? '#fafafa' : '#fff' }}>
+                {r.map((cell, j) => <td key={j} style={{ padding: '7px 10px', borderBottom: '1px solid #eee' }}>{cell}</td>)}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+Object.assign(window, { Icon, HeroAvatar, Stat, Bar, LineChart, useStudents, BarcodeRecordBar, StudentBarcode, PrintTableModal });
