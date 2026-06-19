@@ -3,6 +3,6 @@
    real access control happens via Row Level Security in Postgres).
    ============================================================ */
 window.SB = window.supabase.createClient(
-  'https://sjqboxxgrvwnsmsydulb.supabase.co',
-  'sb_publishable_DsWpkfNcvHz-GAI8G-e97g_KKV4Tikc'
+  'https://jjwwdtsyifdnrtfvoowo.supabase.co',
+  'sb_publishable_Ei___VVavI6nQmgJgIbm6A_Qgkuph88'
 );
